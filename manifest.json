@@ -1,0 +1,14 @@
+{
+  "name": "AutoPollution Manager Pro",
+  "short_name": "Spro PUC",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "type": "image/png"
+    }
+  ]
+}
