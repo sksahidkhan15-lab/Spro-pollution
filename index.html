@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoPollution Manager Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flatpickr CSS for DD/MM/YYYY Date Format -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <style>
+        .drawer-slide { transition: transform 0.3s ease-in-out; }
+        .active-tab { color: #10b981; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased pb-20 select-none min-h-screen">
+
+    <!-- TOP HEADER -->
+    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <button onclick="toggleDrawer()" class="text-emerald-400 text-xl p-1.5 focus:outline-none hover:bg-slate-800 rounded-lg transition">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
+
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-slate-800 border border-emerald-500/50 flex items-center justify-center overflow-hidden shrink-0" id="headerLogoContainer">
+                    <i class="fa-solid fa-kaaba text-emerald-400 text-sm" id="defaultLogoIcon"></i>
+                    <img id="customHeaderLogo" class="hidden w-full h-full object-cover" alt="Logo">
+                </div>
+                <h1 class="text-sm font-bold tracking-wide text-emerald-400 truncate max-w-[180px]" id="headerCenterName">
+                    Green PUC Services
+                </h1>
+            </div>
+
+            <div class="text-xs text-emerald-400 font-bold flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded-full border border-emerald-500/30">
+                <i class="fa-solid fa-crown text-amber-400 text-xs"></i> Spro
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDE DRAWER MENU -->
+    <div id="drawerOverlay" onclick="toggleDrawer()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden transition-opacity"></div>
+    
+    <aside id="sideDrawer" class="fixed top-0 left-0 w-80 h-full bg-slate-950 border-r border-slate-800 z-50 transform -translate-x-full drawer-slide overflow-y-auto flex flex-col justify-between">
+        <div class="p-4 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-emerald-400 text-lg"></i>
+                    <h2 class="text-base font-bold text-emerald-400" id="menuTitle">Menu & Settings</h2>
+                </div>
+                <button onclick="toggleDrawer()" class="text-slate-400 hover:text-white p-1 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <nav class="space-y-1 text-xs">
+                <button onclick="openModal('centerModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-building-user text-emerald-400 text-sm w-5"></i>
+                    <span id="menuChangeCenter">Change Center Name, Phone & Logo</span>
+                </button>
+
+                <button onclick="openModal('msgModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-comment-dots text-emerald-400 text-sm w-5"></i>
+                    <span id="menuMsgEdit">Customer Message Editing (WhatsApp)</span>
+                </button>
+
+                <button onclick="openModal('langModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-gear text-emerald-400 text-sm w-5"></i>
+                    <span id="menuLang">Settings (Language)</span>
+                </button>
+
+                <button onclick="backupData()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-file-csv text-emerald-400 text-sm w-5"></i>
+                    <span id="menuBackup">Download Data Backup (CSV)</span>
+                </button>
+
+                <button onclick="alertAboutUs()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-circle-info text-emerald-400 text-sm w-5"></i>
+                    <span id="menuAbout">About Us</span>
+                </button>
+
+                <button onclick="shareApp()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-share-nodes text-emerald-400 text-sm w-5"></i>
+                    <span id="menuShare">Share App</span>
+                </button>
+
+                <button onclick="alertFeedback()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-star text-emerald-400 text-sm w-5"></i>
+                    <span id="menuFeedback">Feedback</span>
+                </button>
+
+                <button onclick="alertPrivacy()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-user-shield text-emerald-400 text-sm w-5"></i>
+                    <span id="menuPrivacy">Privacy Policy</span>
+                </button>
+
+                <button onclick="alertContact()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-envelope text-emerald-400 text-sm w-5"></i>
+                    <span id="menuContact">Contact Us</span>
+                </button>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-slate-800 text-center text-[10px] text-slate-500">
+            AutoPollution Pro v3.2 • Secured Offline App
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-md mx-auto px-4 py-4">
+
+        <!-- TAB 1: ENTRY FORM -->
+        <section id="tab-entry" class="space-y-4">
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-lg space-y-4">
+                <div class="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                    <i class="fa-solid fa-file-signature text-emerald-400 text-base"></i>
+                    <h2 class="text-sm font-bold text-slate-100" id="formHeader">নতুন পলিউশন এন্ট্রি</h2>
+                </div>
+
+                <form onsubmit="saveVehicleEntry(event)" class="space-y-3.5 text-xs">
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1" id="lblVehicleNo">গাড়ির নম্বর (Vehicle No.)</label>
+                        <!-- NO VALUE INJECTED HERE NOW -->
+                        <input type="text" id="vNo" value="" placeholder="e.g. WB16BA9405" required 
+                            class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 uppercase font-bold text-slate-100">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1" id="lblPhone">মোবাইল নম্বর (Phone / WhatsApp)</label>
+                        <input type="tel" id="vPhone" placeholder="10-digit mobile number" pattern="[0-9]{10}" required 
+                            class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 text-slate-100">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1" id="lblOwner">মালিকের নাম</label>
+                        <input type="text" id="vOwner" placeholder="Customer Name" 
+                            class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 text-slate-100">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block font-medium text-slate-400 mb-1" id="lblIssueDate">ইস্যু ডেট (DD/MM/YYYY)</label>
+                            <input type="text" id="vIssueDate" required class="w-full px-2 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-200">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-400 mb-1" id="lblTerm">মেয়াদ সিলেক্ট করুন</label>
+                            <select id="vTerm" onchange="calcExpiry()" class="w-full px-2 py-2 bg-slate-900 border border-slate-700 rounded-lg text-emerald-400 font-bold">
+                                <option value="1year" id="opt1Year" selected>১ বছর (1 Year)</option>
+                                <option value="6months" id="opt6Months">৬ মাস (6 Months)</option>
+                                <option value="manual" id="optManual">ম্যানুয়াল (Custom Date)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1" id="lblExpDate">মেয়াদ শেষ (Expiry Date)</label>
+                        <input type="text" id="vExpDate" required class="w-full px-3 py-2.5 bg-red-950/40 border border-red-800/50 rounded-xl text-red-400 font-bold">
+                    </div>
+
+                    <button type="submit" id="btnSave" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg mt-2 text-sm">
+                        সেভ করুন ও অ্যালার্ট অ্যাক্টিভ করুন
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 2: DATABASE -->
+        <section id="tab-database" class="hidden space-y-4">
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-lg space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                    <h2 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                        <i class="fa-solid fa-database"></i> <span id="dbTitle">সেভ করা ডাটাবেস</span>
+                    </h2>
+                    <span id="dbCounter" class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">মোট: ০টি</span>
+                </div>
+
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="searchInput" onkeyup="renderDatabase()" placeholder="গাড়ির নম্বর বা মোবাইল নম্বর সার্চ করুন..." 
+                        class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div id="recordList" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ALERT CENTER -->
+        <section id="tab-alerts" class="hidden space-y-4">
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-lg space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                    <h2 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-bell"></i> <span id="alertTitle">৩-স্টেপ অটো অ্যালার্ট (30, 7, 3 Days)</span>
+                    </h2>
+                    <span id="alertCounter" class="text-[11px] bg-amber-950/60 text-amber-400 border border-amber-800 px-2 py-0.5 rounded-full">জরুরি: ০টি</span>
+                </div>
+
+                <div id="alertList" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM FIXED NAVIGATION -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 z-30">
+        <div class="max-w-md mx-auto grid grid-cols-3 text-center py-2">
+            <button id="btnTabEntry" onclick="switchTab('entry')" class="flex flex-col items-center gap-1 active-tab">
+                <i class="fa-solid fa-house text-base"></i>
+                <span class="text-[10px]" id="navHome">হোম</span>
+            </button>
+            <button id="btnTabDb" onclick="switchTab('database')" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fa-solid fa-database text-base"></i>
+                <span class="text-[10px]" id="navDb">ডাটাবেস</span>
+            </button>
+            <button id="btnTabAlerts" onclick="switchTab('alerts')" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fa-solid fa-bell text-base"></i>
+                <span class="text-[10px]" id="navAlerts">অ্যালার্ট</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- MODAL: LANGUAGE SETTINGS -->
+    <div id="langModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-4">
+            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2" id="langModalTitle">Select App Language</h3>
+            <div class="space-y-2 text-xs">
+                <label class="flex items-center gap-3 p-3 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer">
+                    <input type="radio" name="appLang" value="bn" class="accent-emerald-500">
+                    <span class="text-slate-200 font-bold">বাংলা (Bengali)</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer">
+                    <input type="radio" name="appLang" value="en" class="accent-emerald-500">
+                    <span class="text-slate-200 font-bold">English</span>
+                </label>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveLanguage()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg text-xs">Save / সেভ করুন</button>
+                <button onclick="closeModal('langModal')" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-lg text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CENTER & LOGO -->
+    <div id="centerModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-4">
+            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2">Change Center Name, Phone & Logo</h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-300 mb-1">Center Name:</label>
+                    <input type="text" id="inputCenterName" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100">
+                </div>
+                <div>
+                    <label class="block text-slate-300 mb-1">Center Phone / Contact No:</label>
+                    <input type="text" id="inputCenterPhone" placeholder="e.g. 9876543210" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100">
+                </div>
+                <div>
+                    <label class="block text-slate-300 mb-1">Select Logo Image:</label>
+                    <input type="file" id="inputLogoFile" accept="image/*" onchange="previewLogoFile(event)" class="w-full text-xs text-slate-300">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveCenterDetails()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg text-xs">Save</button>
+                <button onclick="closeModal('centerModal')" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-lg text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CUSTOM MESSAGE EDITING -->
+    <div id="msgModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-4">
+            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2">Customer Message Template</h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-300 mb-1">Custom Message Format:</label>
+                    <textarea id="inputMsgTemplate" rows="5" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="Variables: {owner}, {vno}, {exp}, {center}, {cphone}"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveCustomMsg()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg text-xs">Save Message</button>
+                <button onclick="closeModal('msgModal')" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-lg text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HISTORY -->
+    <div id="historyModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-3 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-emerald-400"><i class="fa-solid fa-clock-rotate-left"></i> Customer History</h3>
+                <button onclick="closeModal('historyModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="historyContent" class="space-y-2 text-xs"></div>
+        </div>
+    </div>
+
+    <!-- Flatpickr JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const DB_NAME = 'AutoPollutionDB';
+        const DB_VERSION = 1;
+        let db;
+        let issuePicker, expPicker;
+
+        let appConfig = JSON.parse(localStorage.getItem('auto_puc_config')) || {
+            centerName: "Green PUC Services",
+            centerPhone: "9876543210",
+            logoUrl: "",
+            lang: "bn",
+            msgTemplate: "নমস্কার {owner}, আপনার গাড়ি {vno}-এর পলিউশনের মেয়াদ {exp} তারিখে শেষ হচ্ছে। রিনিউ করতে যোগাযোগ করুন: {center}, কল করুন: {cphone}।"
+        };
+
+        const translations = {
+            bn: {
+                menuTitle: "মেনু ও সেটিংস্",
+                menuChangeCenter: "সেন্টার নেম, ফোন ও লোগো পরিবর্তন",
+                menuMsgEdit: "মেসেজ এডিটিং (WhatsApp)",
+                menuLang: "সেটিংস্ (ভাষা / Language)",
+                menuBackup: "ডাটা ব্যাকআপ ডাউনলোড (CSV)",
+                menuAbout: "আমাদের সম্পর্কে",
+                menuShare: "অ্যাপ শেয়ার করুন",
+                menuFeedback: "ফিডব্যাক",
+                menuPrivacy: "প্রাইভেসি পলিসি",
+                menuContact: "যোগাযোগ করুন",
+                formHeader: "নতুন পলিউশন এন্ট্রি",
+                lblVehicleNo: "গাড়ির নম্বর (Vehicle No.)",
+                lblPhone: "মোবাইল নম্বর (Phone / WhatsApp)",
+                lblOwner: "মালিকের নাম",
+                lblIssueDate: "ইস্যু ডেট (DD/MM/YYYY)",
+                lblTerm: "মেয়াদ সিলেক্ট করুন",
+                opt1Year: "১ বছর (1 Year)",
+                opt6Months: "৬ মাস (6 Months)",
+                optManual: "ম্যানুয়াল (Custom Date)",
+                lblExpDate: "মেয়াদ শেষ (Expiry Date)",
+                btnSave: "সেভ করুন ও অ্যালার্ট অ্যাক্টিভ করুন",
+                dbTitle: "সেভ করা ডাটাবেস",
+                searchPlaceholder: "গাড়ির নম্বর বা মোবাইল নম্বর সার্চ করুন...",
+                alertTitle: "৩-স্টেপ অটো অ্যালার্ট (30, 7, 3 Days)",
+                navHome: "হোম",
+                navDb: "ডাটাবেস",
+                navAlerts: "অ্যালার্ট",
+                totalPrefix: "মোট:",
+                urgentPrefix: "জরুরি:",
+                historyBtn: "হিস্ট্রি"
+            },
+            en: {
+                menuTitle: "Menu & Settings",
+                menuChangeCenter: "Change Center Name, Phone & Logo",
+                menuMsgEdit: "Customer Message Editing (WhatsApp)",
+                menuLang: "Settings (Language)",
+                menuBackup: "Download Data Backup (CSV)",
+                menuAbout: "About Us",
+                menuShare: "Share App",
+                menuFeedback: "Feedback",
+                menuPrivacy: "Privacy Policy",
+                menuContact: "Contact Us",
+                formHeader: "New Pollution Entry",
+                lblVehicleNo: "Vehicle Number",
+                lblPhone: "Mobile Number (Phone / WhatsApp)",
+                lblOwner: "Owner Name",
+                lblIssueDate: "Issue Date (DD/MM/YYYY)",
+                lblTerm: "Select Term",
+                opt1Year: "1 Year",
+                opt6Months: "6 Months",
+                optManual: "Custom Date",
+                lblExpDate: "Expiry Date",
+                btnSave: "Save Record & Activate Alert",
+                dbTitle: "Saved Database",
+                searchPlaceholder: "Search Vehicle or Mobile No...",
+                alertTitle: "3-Step Auto Alert (30, 7, 3 Days)",
+                navHome: "Home",
+                navDb: "Database",
+                navAlerts: "Alerts",
+                totalPrefix: "Total:",
+                urgentPrefix: "Urgent:",
+                historyBtn: "History"
+            }
+        };
+
+        let tempLogoBase64 = "";
+
+        // Initialize Datepickers in DD/MM/YYYY
+        document.addEventListener("DOMContentLoaded", function() {
+            issuePicker = flatpickr("#vIssueDate", {
+                dateFormat: "d/m/Y",
+                defaultDate: new Date(),
+                theme: "dark",
+                onChange: function() { calcExpiry(); }
+            });
+
+            expPicker = flatpickr("#vExpDate", {
+                dateFormat: "d/m/Y",
+                theme: "dark"
+            });
+        });
+
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = function(e) {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains('vehicles')) {
+                db.createObjectStore('vehicles', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+        request.onsuccess = function(e) {
+            db = e.target.result;
+            calcExpiry();
+            applyConfig();
+            applyLanguageUI();
+        };
+
+        function applyLanguageUI() {
+            const lang = appConfig.lang || 'bn';
+            const t = translations[lang];
+
+            document.getElementById('menuTitle').innerText = t.menuTitle;
+            document.getElementById('menuChangeCenter').innerText = t.menuChangeCenter;
+            document.getElementById('menuMsgEdit').innerText = t.menuMsgEdit;
+            document.getElementById('menuLang').innerText = t.menuLang;
+            document.getElementById('menuBackup').innerText = t.menuBackup;
+            document.getElementById('menuAbout').innerText = t.menuAbout;
+            document.getElementById('menuShare').innerText = t.menuShare;
+            document.getElementById('menuFeedback').innerText = t.menuFeedback;
+            document.getElementById('menuPrivacy').innerText = t.menuPrivacy;
+            document.getElementById('menuContact').innerText = t.menuContact;
+
+            document.getElementById('formHeader').innerText = t.formHeader;
+            document.getElementById('lblVehicleNo').innerText = t.lblVehicleNo;
+            document.getElementById('lblPhone').innerText = t.lblPhone;
+            document.getElementById('lblOwner').innerText = t.lblOwner;
+            document.getElementById('lblIssueDate').innerText = t.lblIssueDate;
+            document.getElementById('lblTerm').innerText = t.lblTerm;
+            document.getElementById('opt1Year').innerText = t.opt1Year;
+            document.getElementById('opt6Months').innerText = t.opt6Months;
+            document.getElementById('optManual').innerText = t.optManual;
+            document.getElementById('lblExpDate').innerText = t.lblExpDate;
+            document.getElementById('btnSave').innerText = t.btnSave;
+
+            document.getElementById('dbTitle').innerText = t.dbTitle;
+            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+            document.getElementById('alertTitle').innerText = t.alertTitle;
+
+            document.getElementById('navHome').innerText = t.navHome;
+            document.getElementById('navDb').innerText = t.navDb;
+            document.getElementById('navAlerts').innerText = t.navAlerts;
+        }
+
+        function parseDMYDate(dateStr) {
+            if(!dateStr) return new Date();
+            const parts = dateStr.split('/');
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+
+        function calcExpiry() {
+            const issueVal = document.getElementById('vIssueDate').value;
+            const term = document.getElementById('vTerm').value;
+
+            if (!issueVal) return;
+            let dt = parseDMYDate(issueVal);
+
+            if (term === 'manual') {
+                return;
+            }
+
+            if (term === '1year') dt.setFullYear(dt.getFullYear() + 1);
+            else if (term === '6months') dt.setMonth(dt.getMonth() + 6);
+
+            if(expPicker) {
+                expPicker.setDate(dt);
+            }
+        }
+
+        function saveVehicleEntry(e) {
+            e.preventDefault();
+            const record = {
+                vno: document.getElementById('vNo').value.trim().toUpperCase(),
+                phone: document.getElementById('vPhone').value.trim(),
+                owner: document.getElementById('vOwner').value.trim() || 'Customer',
+                issue: document.getElementById('vIssueDate').value,
+                exp: document.getElementById('vExpDate').value,
+                isSent: false,
+                created_at: new Date().toISOString()
+            };
+
+            const tx = db.transaction('vehicles', 'readwrite');
+            tx.objectStore('vehicles').add(record);
+
+            tx.oncomplete = function() {
+                alert(appConfig.lang === 'en' ? 'Vehicle entry saved successfully!' : 'গাড়ির এন্ট্রি সফলভাবে সেভ হয়েছে!');
+                document.getElementById('vNo').value = '';
+                document.getElementById('vPhone').value = '';
+                document.getElementById('vOwner').value = '';
+                switchTab('database');
+            };
+        }
+
+        function renderDatabase() {
+            const container = document.getElementById('recordList');
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const lang = appConfig.lang || 'bn';
+            const t = translations[lang];
+            container.innerHTML = '';
+
+            const tx = db.transaction('vehicles', 'readonly');
+            tx.objectStore('vehicles').getAll().onsuccess = function(e) {
+                let records = e.target.result.reverse();
+                let filtered = records.filter(item => item.vno.toLowerCase().includes(query) || item.phone.includes(query));
+                document.getElementById('dbCounter').innerText = `${t.totalPrefix} ${filtered.length}`;
+
+                filtered.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs";
+                    card.innerHTML = `
+                        <div class="space-y-1">
+                            <div class="font-bold text-slate-100">${item.vno}</div>
+                            <div class="text-[11px] text-slate-400">${item.phone} (${item.owner})</div>
+                            <div class="text-[10px] text-slate-500">Exp: ${item.exp}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="showCustomerHistory('${item.vno}')" class="bg-slate-800 text-emerald-400 px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-history"></i> ${t.historyBtn}</button>
+                            <button onclick="deleteRecord(${item.id})" class="text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            };
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alertList');
+            const lang = appConfig.lang || 'bn';
+            const t = translations[lang];
+            container.innerHTML = '';
+
+            const tx = db.transaction('vehicles', 'readonly');
+            tx.objectStore('vehicles').getAll().onsuccess = function(e) {
+                let records = e.target.result;
+                let alertItems = records.map(item => ({ ...item, daysLeft: calculateDaysLeft(item.exp) }))
+                                        .filter(item => item.daysLeft <= 30);
+
+                alertItems.sort((a, b) => a.daysLeft - b.daysLeft);
+                document.getElementById('alertCounter').innerText = `${t.urgentPrefix} ${alertItems.length}`;
+
+                alertItems.forEach(item => {
+                    let alertStage = "30 Days Alert";
+                    let badgeColor = "bg-blue-950 text-blue-400 border-blue-800";
+
+                    if (item.daysLeft <= 3) {
+                        alertStage = "3 Days Final Alert!";
+                        badgeColor = "bg-red-950 text-red-400 border-red-800 animate-pulse";
+                    } else if (item.daysLeft <= 7) {
+                        alertStage = "7 Days Alert!";
+                        badgeColor = "bg-amber-950 text-amber-400 border-amber-800";
+                    }
+
+                    let sentBadge = item.isSent 
+                        ? `<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded-full"><i class="fa-solid fa-check-double"></i> Sent</span>` 
+                        : `<span class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full">Not Sent</span>`;
+
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs";
+                    card.innerHTML = `
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-bold text-slate-100">${item.vno}</span>
+                                <span class="text-[9px] px-2 py-0.5 border rounded-full font-bold ${badgeColor}">${alertStage}</span>
+                                ${sentBadge}
+                            </div>
+                            <div class="text-[11px] text-emerald-400">${item.phone} (${item.owner})</div>
+                            <div class="text-[10px] text-slate-400">Exp: ${item.exp} (${item.daysLeft} days left)</div>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button onclick="sendSMS(${item.id}, '${item.phone}', '${item.vno}', '${item.exp}')" class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-comment-sms"></i></button>
+                            <button onclick="sendWhatsApp(${item.id}, '${item.phone}', '${item.vno}', '${item.owner}', '${item.exp}')" class="bg-emerald-600 text-slate-950 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"><i class="fa-brands fa-whatsapp"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            };
+        }
+
+        function calculateDaysLeft(expDateStr) {
+            const exp = parseDMYDate(expDateStr);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            return Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function markAsSent(id) {
+            const tx = db.transaction('vehicles', 'readwrite');
+            const store = tx.objectStore('vehicles');
+            store.get(id).onsuccess = function(e) {
+                let record = e.target.result;
+                if(record) {
+                    record.isSent = true;
+                    store.put(record);
+                }
+            };
+            tx.oncomplete = function() { renderAlerts(); };
+        }
+
+               function buildMessage(owner, vno, exp) {
+            let formattedExp = exp;
+            if (exp && exp.includes('/')) {
+                let parts = exp.split('/');
+                if (parts.length === 3) {
+                    formattedExp = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+
+            let tmpl = appConfig.msgTemplate || "Dear {owner}, your vehicle {vno} PUC certificate is expiring on {exp}. Please visit or contact {center} at {cphone} to renew your PUC certificate. Thank you!";
+            return tmpl.replace('{owner}', owner)
+                       .replace('{vno}', vno)
+                       .replace('{exp}', formattedExp)
+                       .replace('{center}', appConfig.centerName)
+                       .replace('{cphone}', appConfig.centerPhone || "");
+        }
+
+
+        function sendWhatsApp(id, phone, vno, owner, exp) {
+            let msg = buildMessage(owner, vno, exp);
+            markAsSent(id);
+            window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function sendSMS(id, phone, vno, exp) {
+            let msg = `Dear Customer, your vehicle ${vno} PUC certificate is expiring on ${exp}. Contact: ${appConfig.centerName} (${appConfig.centerPhone})`;
+            markAsSent(id);
+            window.open(`sms:+91${phone}?body=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function showCustomerHistory(vno) {
+            const tx = db.transaction('vehicles', 'readonly');
+            tx.objectStore('vehicles').getAll().onsuccess = function(e) {
+                let history = e.target.result.filter(item => item.vno === vno);
+                let content = document.getElementById('historyContent');
+                content.innerHTML = `<div class="font-bold text-slate-200 border-b border-slate-800 pb-1">Vehicle: ${vno} (${history.length} Entries)</div>`;
+
+                history.forEach((h, index) => {
+                    content.innerHTML += `
+                        <div class="bg-slate-950 p-2 rounded border border-slate-800 space-y-0.5">
+                            <div class="text-emerald-400 font-semibold">Entry #${history.length - index}</div>
+                            <div>Issue Date: ${h.issue}</div>
+                            <div>Expiry Date: ${h.exp}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('historyModal').classList.remove('hidden');
+            };
+        }
+
+        function shareApp() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'AutoPollution Manager Pro',
+                    text: 'Manage PUC Renewal Alerts easily!',
+                    url: window.location.href,
+                });
+            } else {
+                alert("App link copied or share not supported on this browser.");
+            }
+        }
+
+        function backupData() {
+            toggleDrawer();
+            const tx = db.transaction('vehicles', 'readonly');
+            tx.objectStore('vehicles').getAll().onsuccess = function(e) {
+                let records = e.target.result;
+                if(records.length === 0) {
+                    alert('No data available to download!');
+                    return;
+                }
+                let csvContent = "data:text/csv;charset=utf-8,Vehicle No,Phone,Owner,Issue Date,Expiry Date\n";
+                records.forEach(r => {
+                    csvContent += `${r.vno},${r.phone},${r.owner},${r.issue},${r.exp}\n`;
+                });
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `puc_backup_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-entry').classList.add('hidden');
+            document.getElementById('tab-database').classList.add('hidden');
+            document.getElementById('tab-alerts').classList.add('hidden');
+
+            document.getElementById('btnTabEntry').classList.remove('active-tab');
+            document.getElementById('btnTabDb').classList.remove('active-tab');
+            document.getElementById('btnTabAlerts').classList.remove('active-tab');
+
+            if (tab === 'entry') {
+                document.getElementById('tab-entry').classList.remove('hidden');
+                document.getElementById('btnTabEntry').classList.add('active-tab');
+            } else if (tab === 'database') {
+                document.getElementById('tab-database').classList.remove('hidden');
+                document.getElementById('btnTabDb').classList.add('active-tab');
+                renderDatabase();
+            } else if (tab === 'alerts') {
+                document.getElementById('tab-alerts').classList.remove('hidden');
+                document.getElementById('btnTabAlerts').classList.add('active-tab');
+                renderAlerts();
+            }
+        }
+
+        function toggleDrawer() {
+            document.getElementById('sideDrawer').classList.toggle('-translate-x-full');
+            document.getElementById('drawerOverlay').classList.toggle('hidden');
+        }
+
+        function openModal(id) {
+            toggleDrawer();
+            if(id === 'centerModal') {
+                document.getElementById('inputCenterName').value = appConfig.centerName;
+                document.getElementById('inputCenterPhone').value = appConfig.centerPhone || "";
+            } else if (id === 'msgModal') {
+                document.getElementById('inputMsgTemplate').value = appConfig.msgTemplate || "";
+            } else if (id === 'langModal') {
+                const radios = document.getElementsByName('appLang');
+                radios.forEach(r => { if(r.value === (appConfig.lang || 'bn')) r.checked = true; });
+            }
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function saveLanguage() {
+            const radios = document.getElementsByName('appLang');
+            let selected = 'bn';
+            radios.forEach(r => { if(r.checked) selected = r.value; });
+            appConfig.lang = selected;
+            localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            applyLanguageUI();
+            closeModal('langModal');
+        }
+
+        function alertAboutUs() { alert(appConfig.lang === 'en' ? 'AutoPollution Manager Pro\nVersion 3.2\nDeveloped for PUC Centers' : 'AutoPollution Manager Pro\nভার্সন ৩.২\nপলিউশন সেন্টারের জন্য তৈরি'); }
+        function alertFeedback() { alert(appConfig.lang === 'en' ? 'Thank you for your feedback!' : 'আপনার ফিডব্যাকের জন্য ধন্যবাদ!'); }
+        function alertPrivacy() { alert(appConfig.lang === 'en' ? '100% Offline & Secured Local Storage App.' : '১০০% অফলাইন ও সুরক্ষিত লোকাল স্টোরেজ অ্যাপ।'); }
+                       function alertContact() { alert(appConfig.lang === 'en' ? 'Contact Support: support.sprobuilder@gmail.com' : 'যোগাযোগ করুন: support.sprobuilder@gmail.com'); }
+
+
+
+        function deleteRecord(id) {
+            const confirmMsg = appConfig.lang === 'en' ? 'Are you sure you want to delete this record?' : 'আপনি কি নিশ্চিত এই রেকর্ডটি ডিলিট করতে চান?';
+            if (confirm(confirmMsg)) {
+                const tx = db.transaction('vehicles', 'readwrite');
+                tx.objectStore('vehicles').delete(id);
+                tx.oncomplete = function() { renderDatabase(); };
+            }
+        }
+
+        function previewLogoFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { tempLogoBase64 = e.target.result; };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveCenterDetails() {
+            const name = document.getElementById('inputCenterName').value.trim();
+            const phone = document.getElementById('inputCenterPhone').value.trim();
+            if(name) appConfig.centerName = name;
+            if(phone) appConfig.centerPhone = phone;
+            if(tempLogoBase64) appConfig.logoUrl = tempLogoBase64;
+            localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            applyConfig();
+            closeModal('centerModal');
+        }
+
+        function saveCustomMsg() {
+            const msg = document.getElementById('inputMsgTemplate').value.trim();
+            if(msg) {
+                appConfig.msgTemplate = msg;
+                localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+                alert(appConfig.lang === 'en' ? "Custom message template saved successfully!" : "কাস্টম মেসেজ টেমপ্লেট সফলভাবে সেভ হয়েছে!");
+            }
+            closeModal('msgModal');
+        }
+
+        function applyConfig() {
+            document.getElementById('headerCenterName').innerText = appConfig.centerName;
+            const logoImg = document.getElementById('customHeaderLogo');
+            const defaultIcon = document.getElementById('defaultLogoIcon');
+            if (appConfig.logoUrl) {
+                logoImg.src = appConfig.logoUrl;
+                logoImg.classList.remove('hidden');
+                defaultIcon.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
