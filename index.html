@@ -391,18 +391,24 @@
 
         // Initialize Datepickers in DD/MM/YYYY
         document.addEventListener("DOMContentLoaded", function() {
-            issuePicker = flatpickr("#vIssueDate", {
-                dateFormat: "d/m/Y",
-                defaultDate: new Date(),
-                theme: "dark",
-                onChange: function() { calcExpiry(); }
-            });
+    issuePicker = flatpickr("#vIssueDate", {
+        dateFormat: "d/m/Y",
+        altFormat: "d/m/Y",
+        altInput: true,
+        defaultDate: new Date(),
+        theme: "dark",
+        onChange: function() {
+            calcExpiry();
+        }
+    });
 
-            expPicker = flatpickr("#vExpDate", {
-                dateFormat: "d/m/Y",
-                theme: "dark"
-            });
-        });
+    expPicker = flatpickr("#vExpDate", {
+        dateFormat: "d/m/Y",
+        altFormat: "d/m/Y",
+        altInput: true,
+        theme: "dark"
+    });
+});
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = function(e) {
@@ -471,8 +477,13 @@
                 return;
             }
 
-            if (term === '1year') dt.setFullYear(dt.getFullYear() + 1);
-            else if (term === '6months') dt.setMonth(dt.getMonth() + 6);
+                if (term === '1year') {
+        dt.setFullYear(dt.getFullYear() + 1);
+        dt.setDate(dt.getDate() - 1);
+    } else if (term === '6months') {
+        dt.setMonth(dt.getMonth() + 6);
+        dt.setDate(dt.getDate() - 1);
+    }
 
             if(expPicker) {
                 expPicker.setDate(dt);
@@ -608,22 +619,24 @@
             tx.oncomplete = function() { renderAlerts(); };
         }
 
-               function buildMessage(owner, vno, exp) {
-            let formattedExp = exp;
-            if (exp && exp.includes('/')) {
-                let parts = exp.split('/');
-                if (parts.length === 3) {
-                    formattedExp = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-            }
-
-            let tmpl = appConfig.msgTemplate || "Dear {owner}, your vehicle {vno} PUC certificate is expiring on {exp}. Please visit or contact {center} at {cphone} to renew your PUC certificate. Thank you!";
-            return tmpl.replace('{owner}', owner)
-                       .replace('{vno}', vno)
-                       .replace('{exp}', formattedExp)
-                       .replace('{center}', appConfig.centerName)
-                       .replace('{cphone}', appConfig.centerPhone || "");
+              function buildMessage(owner, vno, exp) {
+    let formattedExp = exp;
+    if (exp && exp.includes('/')) {
+        let parts = exp.split('/');
+        if (parts.length === 3) {
+            formattedExp = `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
+    }
+
+    let tmpl = appConfig.msgTemplate || "Dear {owner}, your vehicle {vno} PUC certificate is expiring on {exp}. Please visit or contact {center} at {cphone} to renew your PUC certificate. Thank you!";
+    
+    return tmpl.replace('{owner}', `*${owner || 'Customer'}*`)
+               .replace('{vno}', `*${vno}*`)
+               .replace('{exp}', `*${formattedExp}*`)
+               .replace('{center}', `*${appConfig.centerName}*`)
+               .replace('{cphone}', appConfig.centerPhone || "");
+}
+
 
 
         function sendWhatsApp(id, phone, vno, owner, exp) {
