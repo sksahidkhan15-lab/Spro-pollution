@@ -20,6 +20,12 @@
         }
     </style>
     <meta name="theme-color" content="#020617">
+
+    <!-- PWA Manifest & Theme Links -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased pb-24 select-none min-h-screen">
 
@@ -1813,6 +1819,21 @@ Contact: {center_phone}
                 defaultIcon.classList.add('hidden');
             }
         }
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+              console.log('ServiceWorker registered with scope: ', registration.scope);
+            })
+            .catch((error) => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
     </script>
 </body>
 </html>
