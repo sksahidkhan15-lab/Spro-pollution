@@ -12,21 +12,27 @@
     <style>
         .drawer-slide { transition: transform 0.3s ease-in-out; }
         .active-tab { color: #10b981; font-weight: bold; }
+        .alert-subtab.active-subtab { background-color: #065f46; color: #fff; border-color: #10b981; }
+        @media print {
+            body * { visibility: hidden; }
+            #printSection, #printSection * { visibility: visible; }
+            #printSection { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
-    <!-- PWA Manifest & Icons -->
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
-<meta name="theme-color" content="#020617">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
-
+    <meta name="theme-color" content="#020617">
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased pb-20 select-none min-h-screen">
+<body class="bg-slate-900 text-slate-100 font-sans antialiased pb-24 select-none min-h-screen">
+
+    <!-- PIN LOCK OVERLAY -->
+    <div id="pinLockModal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col items-center justify-center p-6 space-y-4">
+        <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl mb-2">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2 class="text-lg font-bold text-emerald-400">Enter Security PIN</h2>
+        <p class="text-xs text-slate-400 text-center">Your app is protected with a PIN lock.</p>
+        <input type="password" id="enteredPin" maxlength="4" placeholder="••••" class="w-36 text-center text-2xl tracking-widest py-2 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 text-slate-100">
+        <button onclick="verifyPin()" class="w-36 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl transition text-xs">Unlock App</button>
+    </div>
 
     <!-- TOP HEADER -->
     <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-30 shadow-md">
@@ -41,12 +47,12 @@
                     <img id="customHeaderLogo" class="hidden w-full h-full object-cover" alt="Logo">
                 </div>
                 <h1 class="text-sm font-bold tracking-wide text-emerald-400 truncate max-w-[180px]" id="headerCenterName">
-                    Green PUC Services
+                    M M Pollution Testing Center
                 </h1>
             </div>
 
             <div class="text-xs text-emerald-400 font-bold flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded-full border border-emerald-500/30">
-                <i class="fa-solid fa-crown text-amber-400 text-xs"></i> Spro
+                <i class="fa-solid fa-crown text-amber-400 text-xs"></i> Pro
             </div>
         </div>
     </header>
@@ -67,12 +73,27 @@
             <nav class="space-y-1 text-xs">
                 <button onclick="openModal('centerModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
                     <i class="fa-solid fa-building-user text-emerald-400 text-sm w-5"></i>
-                    <span id="menuChangeCenter">Change Center Name, Phone & Logo</span>
+                    <span id="menuChangeCenter">Center Profile & Logo</span>
                 </button>
 
                 <button onclick="openModal('msgModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
                     <i class="fa-solid fa-comment-dots text-emerald-400 text-sm w-5"></i>
-                    <span id="menuMsgEdit">Customer Message Editing (WhatsApp)</span>
+                    <span id="menuMsgEdit">WhatsApp Message Template</span>
+                </button>
+
+                <button onclick="openModal('paymentMsgModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-sm w-5"></i>
+                    <span id="menuPaymentMsgEdit">Payment WhatsApp Template</span>
+                </button>
+
+                <button onclick="openModal('backupModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-clock-rotate-left text-emerald-400 text-sm w-5"></i>
+                    <span id="menuAutoBackup">Automatic Backup & Storage</span>
+                </button>
+
+                <button onclick="openModal('pinModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-lock text-emerald-400 text-sm w-5"></i>
+                    <span id="menuPin">Security PIN Lock Setup</span>
                 </button>
 
                 <button onclick="openModal('langModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
@@ -80,44 +101,35 @@
                     <span id="menuLang">Settings (Language)</span>
                 </button>
 
-                <button onclick="backupData()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
-                    <i class="fa-solid fa-file-csv text-emerald-400 text-sm w-5"></i>
-                    <span id="menuBackup">Download Data Backup (CSV)</span>
+                <button onclick="backupDataJSON()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-file-arrow-down text-emerald-400 text-sm w-5"></i>
+                    <span id="menuBackupJSON">Download Full JSON Backup</span>
                 </button>
 
-                <button onclick="alertAboutUs()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
-                    <i class="fa-solid fa-circle-info text-emerald-400 text-sm w-5"></i>
-                    <span id="menuAbout">About Us</span>
+                <button onclick="document.getElementById('importFile').click()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-file-arrow-up text-emerald-400 text-sm w-5"></i>
+                    <span id="menuRestoreJSON">Restore Backup (JSON)</span>
+                </button>
+                <input type="file" id="importFile" accept=".json" onchange="restoreDataJSON(event)" class="hidden">
+
+                <button onclick="backupData()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
+                    <i class="fa-solid fa-file-csv text-emerald-400 text-sm w-5"></i>
+                    <span id="menuBackup">Download CSV Backup</span>
                 </button>
 
                 <button onclick="shareApp()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
                     <i class="fa-solid fa-share-nodes text-emerald-400 text-sm w-5"></i>
                     <span id="menuShare">Share App</span>
                 </button>
-
-                <button onclick="alertFeedback()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
-                    <i class="fa-solid fa-star text-emerald-400 text-sm w-5"></i>
-                    <span id="menuFeedback">Feedback</span>
-                </button>
-
-                <button onclick="alertPrivacy()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
-                    <i class="fa-solid fa-user-shield text-emerald-400 text-sm w-5"></i>
-                    <span id="menuPrivacy">Privacy Policy</span>
-                </button>
-
-                <button onclick="alertContact()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200">
-                    <i class="fa-solid fa-envelope text-emerald-400 text-sm w-5"></i>
-                    <span id="menuContact">Contact Us</span>
-                </button>
             </nav>
         </div>
         <div class="p-4 border-t border-slate-800 text-center text-[10px] text-slate-500">
-            AutoPollution Pro v3.2 • Secured Offline App
+            AutoPollution Pro • Secured Offline App
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="max-w-md mx-auto px-4 py-4">
+    <main class="max-w-md mx-auto px-4 py-4 space-y-4">
 
         <!-- TAB 1: ENTRY FORM -->
         <section id="tab-entry" class="space-y-4">
@@ -130,8 +142,7 @@
                 <form onsubmit="saveVehicleEntry(event)" class="space-y-3.5 text-xs">
                     <div>
                         <label class="block font-medium text-slate-300 mb-1" id="lblVehicleNo">গাড়ির নম্বর (Vehicle No.)</label>
-                        <!-- NO VALUE INJECTED HERE NOW -->
-                        <input type="text" id="vNo" value="" placeholder="e.g. WB16BA9405" required 
+                        <input type="text" id="vNo" placeholder="e.g. WB16BA9405" required 
                             class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 uppercase font-bold text-slate-100">
                     </div>
 
@@ -145,6 +156,21 @@
                         <label class="block font-medium text-slate-300 mb-1" id="lblOwner">মালিকের নাম</label>
                         <input type="text" id="vOwner" placeholder="Customer Name" 
                             class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 text-slate-100">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1" id="lblAmount">টাকা / প্রাইস (₹)</label>
+                            <input type="number" id="vAmount" placeholder="e.g. 70" value="70" required 
+                                class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-emerald-500 text-slate-100 font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-slate-300 mb-1" id="lblPaymentStatus">পেমেন্ট স্ট্যাটাস</label>
+                            <select id="vPaymentStatus" class="w-full px-2 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-emerald-400 font-bold">
+                                <option value="Due" id="optDue" selected>বকেয়া (Due)</option>
+                                <option value="Paid" id="optPaid">পরিশোধিত (Paid)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
@@ -194,17 +220,55 @@
             </div>
         </section>
 
-        <!-- TAB 3: ALERT CENTER -->
+        <!-- TAB 3: PAYMENT & DUE LEDGER -->
+        <section id="tab-payment" class="hidden space-y-4">
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-lg space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                    <h2 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-book-open"></i> <span id="ledgerTitle">বকেয়া খাতা ও পেমেন্ট</span>
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span id="ledgerCounter" class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">গ্রাহক: ০</span>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="searchLedgerInput" onkeyup="renderLedger()" placeholder="গ্রাহকের নাম বা মোবাইল নম্বর সার্চ করুন..." 
+                        class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div id="ledgerList" class="space-y-3 pt-1"></div>
+            </div>
+        </section>
+
+        <!-- TAB 4: ALERT CENTER -->
         <section id="tab-alerts" class="hidden space-y-4">
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-lg space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
                     <h2 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-bell"></i> <span id="alertTitle">৩-স্টেপ অটো অ্যালার্ট (30, 7, 3 Days)</span>
+                        <i class="fa-solid fa-bell"></i> <span id="alertTitle">অটো অ্যালার্ট সেন্টার</span>
                     </h2>
-                    <span id="alertCounter" class="text-[11px] bg-amber-950/60 text-amber-400 border border-amber-800 px-2 py-0.5 rounded-full">জরুরি: ০টি</span>
                 </div>
 
-                <div id="alertList" class="space-y-2.5"></div>
+                <!-- 4 Sub-Tabs for Alerts -->
+                <div class="grid grid-cols-4 gap-1 text-center text-[10px] font-bold">
+                    <button type="button" id="subTabToday" onclick="switchAlertSubTab('today')" class="alert-subtab py-2 px-1 bg-slate-900 border border-slate-700 rounded-lg text-slate-300">
+                        Today (<span id="countToday">0</span>)
+                    </button>
+                    <button type="button" id="subTab3Day" onclick="switchAlertSubTab('3day')" class="alert-subtab py-2 px-1 bg-slate-900 border border-slate-700 rounded-lg text-slate-300">
+                        3 Day (<span id="count3Day">0</span>)
+                    </button>
+                    <button type="button" id="subTab7Day" onclick="switchAlertSubTab('7day')" class="alert-subtab py-2 px-1 bg-slate-900 border border-slate-700 rounded-lg text-slate-300">
+                        7 Day (<span id="count7Day">0</span>)
+                    </button>
+                    <button type="button" id="subTabExpired" onclick="switchAlertSubTab('expired')" class="alert-subtab py-2 px-1 bg-slate-900 border border-slate-700 rounded-lg text-slate-300">
+                        Expired (<span id="countExpired">0</span>)
+                    </button>
+                </div>
+
+                <!-- Alert Sub-tab Content List -->
+                <div id="alertList" class="space-y-2.5 pt-2"></div>
             </div>
         </section>
 
@@ -212,7 +276,7 @@
 
     <!-- BOTTOM FIXED NAVIGATION -->
     <footer class="fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 z-30">
-        <div class="max-w-md mx-auto grid grid-cols-3 text-center py-2">
+        <div class="max-w-md mx-auto grid grid-cols-4 text-center py-2">
             <button id="btnTabEntry" onclick="switchTab('entry')" class="flex flex-col items-center gap-1 active-tab">
                 <i class="fa-solid fa-house text-base"></i>
                 <span class="text-[10px]" id="navHome">হোম</span>
@@ -220,6 +284,10 @@
             <button id="btnTabDb" onclick="switchTab('database')" class="flex flex-col items-center gap-1 text-slate-400">
                 <i class="fa-solid fa-database text-base"></i>
                 <span class="text-[10px]" id="navDb">ডাটাবেস</span>
+            </button>
+            <button id="btnTabPayment" onclick="switchTab('payment')" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fa-solid fa-book-open text-base"></i>
+                <span class="text-[10px]" id="navPayment">খাতা</span>
             </button>
             <button id="btnTabAlerts" onclick="switchTab('alerts')" class="flex flex-col items-center gap-1 text-slate-400">
                 <i class="fa-solid fa-bell text-base"></i>
@@ -243,8 +311,36 @@
                 </label>
             </div>
             <div class="flex gap-2">
-                <button onclick="saveLanguage()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg text-xs">Save / সেভ করুন</button>
+                <button onclick="saveLanguage()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg text-xs">Save</button>
                 <button onclick="closeModal('langModal')" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-lg text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUTOMATIC BACKUP & STORAGE -->
+    <div id="backupModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-3 text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-emerald-400"><i class="fa-solid fa-clock-rotate-left"></i> Automatic Backup & Storage</h3>
+                <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-slate-300 mb-1">Automatic Backup Frequency:</label>
+                    <select id="autoBackupFreq" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-emerald-400 font-bold">
+                        <option value="daily">Daily Backup</option>
+                        <option value="weekly">Weekly Backup</option>
+                        <option value="off">Off</option>
+                    </select>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                    <div class="font-bold text-slate-200">Storage Information</div>
+                    <div id="storageUsageInfo" class="text-slate-400 text-[11px]">Calculating storage usage...</div>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveAutoBackupSettings()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg">Save Settings</button>
+                <button onclick="requestPersistentStorage()" class="bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg">Enable Persistent Storage</button>
             </div>
         </div>
     </div>
@@ -252,7 +348,7 @@
     <!-- MODAL: CENTER & LOGO -->
     <div id="centerModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-4">
-            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2">Change Center Name, Phone & Logo</h3>
+            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2">Center Profile & Logo</h3>
             <div class="space-y-3 text-xs">
                 <div>
                     <label class="block text-slate-300 mb-1">Center Name:</label>
@@ -260,7 +356,11 @@
                 </div>
                 <div>
                     <label class="block text-slate-300 mb-1">Center Phone / Contact No:</label>
-                    <input type="text" id="inputCenterPhone" placeholder="e.g. 9876543210" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100">
+                    <input type="text" id="inputCenterPhone" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100">
+                </div>
+                <div>
+                    <label class="block text-slate-300 mb-1">Center Address:</label>
+                    <input type="text" id="inputCenterAddress" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100">
                 </div>
                 <div>
                     <label class="block text-slate-300 mb-1">Select Logo Image:</label>
@@ -277,16 +377,75 @@
     <!-- MODAL: CUSTOM MESSAGE EDITING -->
     <div id="msgModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-4">
-            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2">Customer Message Template</h3>
+            <h3 class="text-sm font-bold text-emerald-400 border-b border-slate-800 pb-2">WhatsApp Message Template</h3>
             <div class="space-y-3 text-xs">
                 <div>
-                    <label class="block text-slate-300 mb-1">Custom Message Format:</label>
-                    <textarea id="inputMsgTemplate" rows="5" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="Variables: {owner}, {vno}, {exp}, {center}, {cphone}"></textarea>
+                    <label class="block text-slate-300 mb-1">Custom Format Tags: {owner}, {vno}, {exp}, {center}, {cphone}</label>
+                    <textarea id="inputMsgTemplate" rows="5" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500"></textarea>
                 </div>
             </div>
             <div class="flex gap-2">
                 <button onclick="saveCustomMsg()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg text-xs">Save Message</button>
                 <button onclick="closeModal('msgModal')" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-lg text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PAYMENT MESSAGE TEMPLATE SETTINGS -->
+    <div id="paymentMsgModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-emerald-400"><i class="fa-solid fa-file-invoice-dollar"></i> Payment WhatsApp Template</h3>
+                <button onclick="closeModal('paymentMsgModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="text-[11px] text-slate-400 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                    <b>Placeholders:</b> {owner}, {phone}, {old_due}, {vehicle_list}, {new_total_outstanding}, {paid_date}, {paid_amount}, {current_balance_due}, {center}, {center_phone}, {address}
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">বাংলা পেমেন্ট টেমপ্লেট (Bangla Payment Template):</label>
+                    <textarea id="inputPaymentMsgBn" rows="10" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"></textarea>
+                    <button type="button" onclick="resetPaymentTemplate('bn')" class="text-[10px] text-emerald-400 hover:underline mt-1">Reset Default Bangla</button>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">English Payment Template:</label>
+                    <textarea id="inputPaymentMsgEn" rows="10" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"></textarea>
+                    <button type="button" onclick="resetPaymentTemplate('en')" class="text-[10px] text-emerald-400 hover:underline mt-1">Reset Default English</button>
+                </div>
+
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-amber-400">Live Preview Test</span>
+                        <button onclick="previewPaymentTemplate()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2.5 py-1 rounded text-[11px] font-bold"><i class="fa-solid fa-eye"></i> Preview</button>
+                    </div>
+                    <pre id="paymentPreviewBox" class="text-[10px] text-slate-300 bg-slate-900 p-2.5 rounded border border-slate-800 whitespace-pre-wrap font-sans"></pre>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="savePaymentTemplates()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-lg text-xs">Save Templates</button>
+                <button onclick="closeModal('paymentMsgModal')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-lg text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PIN LOCK SETUP -->
+    <div id="pinModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm space-y-3 text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-emerald-400"><i class="fa-solid fa-lock"></i> Security PIN Lock</h3>
+                <button onclick="closeModal('pinModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div>
+                <label class="block text-slate-300 mb-1">Set / Update 4-Digit PIN (Leave blank to disable):</label>
+                <input type="password" id="inputNewPin" maxlength="4" placeholder="••••" class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 text-center tracking-widest text-lg">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="savePinConfig()" class="flex-1 bg-emerald-600 text-slate-950 font-bold py-2 rounded-lg">Save PIN</button>
+                <button onclick="disablePin()" class="bg-slate-800 text-red-400 px-3 py-2 rounded-lg">Disable PIN</button>
             </div>
         </div>
     </div>
@@ -302,40 +461,142 @@
         </div>
     </div>
 
+    <!-- MODAL: PRINTABLE SERVICE RECORD RECEIPT -->
+    <div id="printModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white text-slate-900 p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-2xl relative" id="printSection">
+            <div class="text-center border-b pb-3 space-y-1">
+                <h2 class="text-base font-bold uppercase tracking-wide text-emerald-700" id="receiptCenterName">M M Pollution Testing Center</h2>
+                <p class="text-[11px] text-slate-600" id="receiptCenterAddress">Address: Local Market Area</p>
+                <p class="text-[11px] text-slate-600">Contact: <span id="receiptCenterPhone">8145374478</span></p>
+                <div class="inline-block bg-slate-100 border border-slate-300 px-3 py-0.5 rounded text-[11px] font-bold mt-1 text-slate-700">SERVICE RECORD RECEIPT</div>
+            </div>
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Vehicle No:</span>
+                    <span class="font-bold uppercase" id="recVNo">WB16BA9405</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Owner Name:</span>
+                    <span class="font-bold" id="recOwner">Customer</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Mobile No:</span>
+                    <span class="font-bold" id="recPhone">9876543210</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Issue Date:</span>
+                    <span class="font-bold" id="recIssue">01/01/2026</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Expiry Date:</span>
+                    <span class="font-bold text-red-600" id="recExp">01/01/2027</span>
+                </div>
+            </div>
+            <div class="pt-4 flex justify-between items-end text-[11px] text-slate-600">
+                <div>Note: Centre Service Record only.</div>
+                <div class="text-center">
+                    <div class="h-8 border-b border-dashed border-slate-400 mb-1"></div>
+                    Authorized Signatory
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 print:hidden">
+                <button onclick="window.print()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg text-xs"><i class="fa-solid fa-print"></i> Print Receipt</button>
+                <button onclick="closeModal('printModal')" class="flex-1 bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Flatpickr JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
         const DB_NAME = 'AutoPollutionDB';
-        const DB_VERSION = 1;
+        const DB_VERSION = 21;
         let db;
         let issuePicker, expPicker;
+        let currentAlertSubTab = 'today';
+
+        const defaultPaymentTemplateBn = `*পেমেন্ট ও বকেয়া বিবরণ*
+------------------------
+Old Due: ₹{old_due}
+{vehicle_list}
+------------------------
+*New Total Outstanding: ₹{new_total_outstanding}*
+Payment Received: {paid_date} {paid_amount}
+------------------------
+*Current Balance Due: ₹{current_balance_due}*
+
+Contact: {center_phone}
+{address}`;
+
+        const defaultPaymentTemplateEn = `*Payment & Due Details*
+------------------------
+Old Due: ₹{old_due}
+{vehicle_list}
+------------------------
+*New Total Outstanding: ₹{new_total_outstanding}*
+Payment Received: {paid_date} {paid_amount}
+------------------------
+*Current Balance Due: ₹{current_balance_due}*
+
+Contact: {center_phone}
+{address}`;
 
         let appConfig = JSON.parse(localStorage.getItem('auto_puc_config')) || {
-            centerName: "Green PUC Services",
-            centerPhone: "9876543210",
+            centerName: "M M Pollution Testing Center",
+            centerPhone: "8145374478",
+            centerAddress: "NH-2, Durgapur Expressway, Gobindepur, Hooghly – 712305, West Bengal.",
             logoUrl: "",
             lang: "bn",
-            msgTemplate: "নমস্কার {owner}, আপনার গাড়ি {vno}-এর পলিউশনের মেয়াদ {exp} তারিখে শেষ হচ্ছে। রিনিউ করতে যোগাযোগ করুন: {center}, কল করুন: {cphone}।"
+            pinHash: "",
+            autoBackupFreq: "daily",
+            lastBackupDate: "",
+            msgTemplate: "নমস্কার {owner}, আপনার গাড়ি {vno}-এর পলিউশনের মেয়াদ {exp} তারিখে শেষ হচ্ছে। রিনিউ করতে যোগাযোগ করুন: {center}, কল করুন: {cphone}。",
+            paymentMsgBn: defaultPaymentTemplateBn,
+            paymentMsgEn: defaultPaymentTemplateEn
         };
+
+        if (!appConfig.paymentMsgBn) appConfig.paymentMsgBn = defaultPaymentTemplateBn;
+        if (!appConfig.paymentMsgEn) appConfig.paymentMsgEn = defaultPaymentTemplateEn;
+
+        if (appConfig.pin && !appConfig.pinHash) {
+            hashPin(appConfig.pin).then(h => {
+                appConfig.pinHash = h;
+                delete appConfig.pin;
+                localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            });
+        }
+
+        async function hashPin(pin) {
+            if (!pin) return "";
+            const msgBuffer = new TextEncoder().encode(pin);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         const translations = {
             bn: {
                 menuTitle: "মেনু ও সেটিংস্",
-                menuChangeCenter: "সেন্টার নেম, ফোন ও লোগো পরিবর্তন",
-                menuMsgEdit: "মেসেজ এডিটিং (WhatsApp)",
+                menuChangeCenter: "সেন্টার প্রোফাইল ও লোগো",
+                menuMsgEdit: "হোয়াটসঅ্যাপ মেসেজ টেমপ্লেট",
+                menuPaymentMsgEdit: "পেমেন্ট হোয়াটসঅ্যাপ টেমপ্লেট",
+                menuAutoBackup: "অটো ব্যাকআপ ও স্টোরেজ",
+                menuPin: "সিকিউরিটি পিন লক",
                 menuLang: "সেটিংস্ (ভাষা / Language)",
-                menuBackup: "ডাটা ব্যাকআপ ডাউনলোড (CSV)",
-                menuAbout: "আমাদের সম্পর্কে",
+                menuBackupJSON: "সম্পূর্ণ JSON ব্যাকআপ ডাউনলোড",
+                menuRestoreJSON: "ব্যাকআপ রিস্টোর (JSON)",
+                menuBackup: "ডাটা ব্যাকআপ (CSV)",
                 menuShare: "অ্যাপ শেয়ার করুন",
-                menuFeedback: "ফিডব্যাক",
-                menuPrivacy: "প্রাইভেসি পলিসি",
-                menuContact: "যোগাযোগ করুন",
                 formHeader: "নতুন পলিউশন এন্ট্রি",
                 lblVehicleNo: "গাড়ির নম্বর (Vehicle No.)",
                 lblPhone: "মোবাইল নম্বর (Phone / WhatsApp)",
                 lblOwner: "মালিকের নাম",
+                lblAmount: "টাকা / প্রাইস (₹)",
+                lblPaymentStatus: "পেমেন্ট স্ট্যাটাস",
+                optDue: "বকেয়া (Due)",
+                optPaid: "পরিশোধিত (Paid)",
                 lblIssueDate: "ইস্যু ডেট (DD/MM/YYYY)",
                 lblTerm: "মেয়াদ সিলেক্ট করুন",
                 opt1Year: "১ বছর (1 Year)",
@@ -344,30 +605,38 @@
                 lblExpDate: "মেয়াদ শেষ (Expiry Date)",
                 btnSave: "সেভ করুন ও অ্যালার্ট অ্যাক্টিভ করুন",
                 dbTitle: "সেভ করা ডাটাবেস",
+                ledgerTitle: "বকেয়া খাতা ও পেমেন্ট",
                 searchPlaceholder: "গাড়ির নম্বর বা মোবাইল নম্বর সার্চ করুন...",
-                alertTitle: "৩-স্টেপ অটো অ্যালার্ট (30, 7, 3 Days)",
+                searchLedgerPlaceholder: "গ্রাহকের নাম বা মোবাইল নম্বর সার্চ করুন...",
+                alertTitle: "অটো অ্যালার্ট সেন্টার",
                 navHome: "হোম",
                 navDb: "ডাটাবেস",
+                navPayment: "খাতা",
                 navAlerts: "অ্যালার্ট",
                 totalPrefix: "মোট:",
-                urgentPrefix: "জরুরি:",
-                historyBtn: "হিস্ট্রি"
+                ledgerEmptyMsg: "আগের হিসাব পাঠানো হয়েছে। নতুন গাড়ি বা পেমেন্ট যোগ করলে এখানে দেখাবে।",
+                paymentReceiveBtn: "পেমেন্ট রিসিভ"
             },
             en: {
                 menuTitle: "Menu & Settings",
-                menuChangeCenter: "Change Center Name, Phone & Logo",
-                menuMsgEdit: "Customer Message Editing (WhatsApp)",
+                menuChangeCenter: "Center Profile & Logo",
+                menuMsgEdit: "WhatsApp Message Template",
+                menuPaymentMsgEdit: "Payment WhatsApp Template",
+                menuAutoBackup: "Auto Backup & Storage",
+                menuPin: "Security PIN Lock Setup",
                 menuLang: "Settings (Language)",
-                menuBackup: "Download Data Backup (CSV)",
-                menuAbout: "About Us",
+                menuBackupJSON: "Download Full JSON Backup",
+                menuRestoreJSON: "Restore Backup (JSON)",
+                menuBackup: "Download CSV Backup",
                 menuShare: "Share App",
-                menuFeedback: "Feedback",
-                menuPrivacy: "Privacy Policy",
-                menuContact: "Contact Us",
                 formHeader: "New Pollution Entry",
                 lblVehicleNo: "Vehicle Number",
                 lblPhone: "Mobile Number (Phone / WhatsApp)",
                 lblOwner: "Owner Name",
+                lblAmount: "Amount / Price (₹)",
+                lblPaymentStatus: "Payment Status",
+                optDue: "Due",
+                optPaid: "Paid",
                 lblIssueDate: "Issue Date (DD/MM/YYYY)",
                 lblTerm: "Select Term",
                 opt1Year: "1 Year",
@@ -376,39 +645,64 @@
                 lblExpDate: "Expiry Date",
                 btnSave: "Save Record & Activate Alert",
                 dbTitle: "Saved Database",
+                ledgerTitle: "Due Ledger & Payments",
                 searchPlaceholder: "Search Vehicle or Mobile No...",
-                alertTitle: "3-Step Auto Alert (30, 7, 3 Days)",
+                searchLedgerPlaceholder: "Search Customer Name or Mobile...",
+                alertTitle: "Auto Alert Center",
                 navHome: "Home",
                 navDb: "Database",
+                navPayment: "Ledger",
                 navAlerts: "Alerts",
                 totalPrefix: "Total:",
-                urgentPrefix: "Urgent:",
-                historyBtn: "History"
+                ledgerEmptyMsg: "Previous ledger sent. New entries or payments will appear here.",
+                paymentReceiveBtn: "Receive Payment"
             }
         };
 
         let tempLogoBase64 = "";
 
-        // Initialize Datepickers in DD/MM/YYYY
         document.addEventListener("DOMContentLoaded", function() {
-    issuePicker = flatpickr("#vIssueDate", {
-        dateFormat: "d/m/Y",
-        altFormat: "d/m/Y",
-        altInput: true,
-        defaultDate: new Date(),
-        theme: "dark",
-        onChange: function() {
-            calcExpiry();
-        }
-    });
+            checkPinLock();
+            
+            issuePicker = flatpickr("#vIssueDate", {
+                dateFormat: "d/m/Y",
+                altFormat: "d/m/Y",
+                altInput: true,
+                allowInput: true,
+                defaultDate: new Date(),
+                theme: "dark",
+                onChange: function(selectedDates) {
+                    if(selectedDates.length > 0) calcExpiry();
+                }
+            });
 
-    expPicker = flatpickr("#vExpDate", {
-        dateFormat: "d/m/Y",
-        altFormat: "d/m/Y",
-        altInput: true,
-        theme: "dark"
-    });
-});
+            expPicker = flatpickr("#vExpDate", {
+                dateFormat: "d/m/Y",
+                altFormat: "d/m/Y",
+                altInput: true,
+                allowInput: true,
+                theme: "dark"
+            });
+
+            calcExpiry();
+        });
+
+        async function checkPinLock() {
+            if(appConfig.pinHash && appConfig.pinHash.length > 0) {
+                document.getElementById('pinLockModal').classList.remove('hidden');
+            }
+        }
+
+        async function verifyPin() {
+            const entered = document.getElementById('enteredPin').value;
+            const enteredHash = await hashPin(entered);
+            if(enteredHash === appConfig.pinHash) {
+                document.getElementById('pinLockModal').classList.add('hidden');
+                document.getElementById('enteredPin').value = '';
+            } else {
+                alert("Incorrect PIN!");
+            }
+        }
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = function(e) {
@@ -416,12 +710,23 @@
             if (!db.objectStoreNames.contains('vehicles')) {
                 db.createObjectStore('vehicles', { keyPath: 'id', autoIncrement: true });
             }
+            if (!db.objectStoreNames.contains('ledgers')) {
+                db.createObjectStore('ledgers', { keyPath: 'phone' });
+            }
+            if (!db.objectStoreNames.contains('payments')) {
+                db.createObjectStore('payments', { keyPath: 'id', autoIncrement: true });
+            }
         };
         request.onsuccess = function(e) {
             db = e.target.result;
-            calcExpiry();
             applyConfig();
             applyLanguageUI();
+            checkAutomaticBackup();
+            updateStorageEstimateInfo();
+        };
+        request.onerror = function(e) {
+            console.error("IndexedDB initialization error:", e.target.error);
+            alert("Database error occurred. Please check browser permissions.");
         };
 
         function applyLanguageUI() {
@@ -431,18 +736,23 @@
             document.getElementById('menuTitle').innerText = t.menuTitle;
             document.getElementById('menuChangeCenter').innerText = t.menuChangeCenter;
             document.getElementById('menuMsgEdit').innerText = t.menuMsgEdit;
+            document.getElementById('menuPaymentMsgEdit').innerText = t.menuPaymentMsgEdit;
+            document.getElementById('menuAutoBackup').innerText = t.menuAutoBackup;
+            document.getElementById('menuPin').innerText = t.menuPin;
             document.getElementById('menuLang').innerText = t.menuLang;
+            document.getElementById('menuBackupJSON').innerText = t.menuBackupJSON;
+            document.getElementById('menuRestoreJSON').innerText = t.menuRestoreJSON;
             document.getElementById('menuBackup').innerText = t.menuBackup;
-            document.getElementById('menuAbout').innerText = t.menuAbout;
             document.getElementById('menuShare').innerText = t.menuShare;
-            document.getElementById('menuFeedback').innerText = t.menuFeedback;
-            document.getElementById('menuPrivacy').innerText = t.menuPrivacy;
-            document.getElementById('menuContact').innerText = t.menuContact;
 
             document.getElementById('formHeader').innerText = t.formHeader;
             document.getElementById('lblVehicleNo').innerText = t.lblVehicleNo;
             document.getElementById('lblPhone').innerText = t.lblPhone;
             document.getElementById('lblOwner').innerText = t.lblOwner;
+            document.getElementById('lblAmount').innerText = t.lblAmount;
+            document.getElementById('lblPaymentStatus').innerText = t.lblPaymentStatus;
+            document.getElementById('optDue').innerText = t.optDue;
+            document.getElementById('optPaid').innerText = t.optPaid;
             document.getElementById('lblIssueDate').innerText = t.lblIssueDate;
             document.getElementById('lblTerm').innerText = t.lblTerm;
             document.getElementById('opt1Year').innerText = t.opt1Year;
@@ -452,148 +762,672 @@
             document.getElementById('btnSave').innerText = t.btnSave;
 
             document.getElementById('dbTitle').innerText = t.dbTitle;
+            document.getElementById('ledgerTitle').innerText = t.ledgerTitle;
             document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+            document.getElementById('searchLedgerInput').placeholder = t.searchLedgerPlaceholder;
             document.getElementById('alertTitle').innerText = t.alertTitle;
 
             document.getElementById('navHome').innerText = t.navHome;
             document.getElementById('navDb').innerText = t.navDb;
+            document.getElementById('navPayment').innerText = t.navPayment;
             document.getElementById('navAlerts').innerText = t.navAlerts;
         }
 
         function parseDMYDate(dateStr) {
-            if(!dateStr) return new Date();
-            const parts = dateStr.split('/');
-            return new Date(parts[2], parts[1] - 1, parts[0]);
+            if (!dateStr) return new Date();
+            let cleanStr = String(dateStr).trim();
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+                const parts = cleanStr.split('-');
+                return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            }
+
+            cleanStr = cleanStr.replace(/-/g, '/').replace(/\./g, '/');
+            const parts = cleanStr.split('/');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                    return new Date(year, month, day);
+                }
+            }
+            return new Date();
+        }
+
+        function toDBDateFormat(dateInput) {
+            let d = (dateInput instanceof Date) ? dateInput : parseDMYDate(dateInput);
+            if (isNaN(d.getTime())) d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function toDisplayDateFormat(dateInput) {
+            if (!dateInput) return "";
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateInput)) return dateInput;
+            
+            let d;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+                const parts = dateInput.split('-');
+                d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            } else {
+                d = parseDMYDate(dateInput);
+            }
+
+            if (isNaN(d.getTime())) return dateInput;
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
         }
 
         function calcExpiry() {
-            const issueVal = document.getElementById('vIssueDate').value;
+            let issueVal = null;
+            if (issuePicker && issuePicker.selectedDates.length > 0) {
+                issueVal = issuePicker.selectedDates[0];
+            } else {
+                issueVal = parseDMYDate(document.getElementById('vIssueDate').value);
+            }
+            
             const term = document.getElementById('vTerm').value;
+            if (!issueVal || isNaN(issueVal.getTime())) return;
+            
+            let dt = new Date(issueVal.getTime());
+            if (term === 'manual') return;
 
-            if (!issueVal) return;
-            let dt = parseDMYDate(issueVal);
-
-            if (term === 'manual') {
-                return;
+            if (term === '1year') {
+                dt.setFullYear(dt.getFullYear() + 1);
+                dt.setDate(dt.getDate() - 1);
+            } else if (term === '6months') {
+                dt.setMonth(dt.getMonth() + 6);
+                dt.setDate(dt.getDate() - 1);
             }
 
-                if (term === '1year') {
-        dt.setFullYear(dt.getFullYear() + 1);
-        dt.setDate(dt.getDate() - 1);
-    } else if (term === '6months') {
-        dt.setMonth(dt.getMonth() + 6);
-        dt.setDate(dt.getDate() - 1);
-    }
-
-            if(expPicker) {
-                expPicker.setDate(dt);
+            if (expPicker) {
+                expPicker.setDate(dt, true);
+            } else {
+                document.getElementById('vExpDate').value = toDisplayDateFormat(dt);
             }
         }
 
         function saveVehicleEntry(e) {
             e.preventDefault();
+            
+            let issueDateStr = issuePicker && issuePicker.selectedDates.length > 0 ? issuePicker.formatDate(issuePicker.selectedDates[0], "d/m/Y") : document.getElementById('vIssueDate').value;
+            let expDateStr = expPicker && expPicker.selectedDates.length > 0 ? expPicker.formatDate(expPicker.selectedDates[0], "d/m/Y") : document.getElementById('vExpDate').value;
+
+            const phone = document.getElementById('vPhone').value.trim();
+            const owner = document.getElementById('vOwner').value.trim() || 'Customer';
+            const vno = document.getElementById('vNo').value.trim().toUpperCase();
+            const amount = parseFloat(document.getElementById('vAmount').value) || 0;
+            const paymentStatus = document.getElementById('vPaymentStatus').value;
+
             const record = {
-                vno: document.getElementById('vNo').value.trim().toUpperCase(),
-                phone: document.getElementById('vPhone').value.trim(),
-                owner: document.getElementById('vOwner').value.trim() || 'Customer',
-                issue: document.getElementById('vIssueDate').value,
-                exp: document.getElementById('vExpDate').value,
+                vno: vno,
+                phone: phone,
+                owner: owner,
+                amount: amount,
+                paymentStatus: paymentStatus,
+                issue: toDBDateFormat(issueDateStr),
+                exp: toDBDateFormat(expDateStr),
                 isSent: false,
                 created_at: new Date().toISOString()
             };
 
-            const tx = db.transaction('vehicles', 'readwrite');
+            if (!db) { alert("Database not ready!"); return; }
+
+            const tx = db.transaction(['vehicles', 'ledgers'], 'readwrite');
             tx.objectStore('vehicles').add(record);
 
+            if (paymentStatus === 'Due' && amount > 0) {
+                const ledgerStore = tx.objectStore('ledgers');
+                ledgerStore.get(phone).onsuccess = function(e) {
+                    let ledger = e.target.result;
+                    let displayDate = toDisplayDateFormat(record.issue);
+                    if (!ledger) {
+                        ledger = {
+                            phone: phone,
+                            owner: owner,
+                            lastCurrentDue: 0,
+                            entries: [{ vno: vno, amount: amount, date: displayDate, issue: record.issue, sent: false }]
+                        };
+                    } else {
+                        ledger.owner = owner;
+                        if (!ledger.entries) ledger.entries = [];
+                        ledger.entries.push({ vno: vno, amount: amount, date: displayDate, issue: record.issue, sent: false });
+                    }
+                    ledgerStore.put(ledger);
+                };
+            }
+
             tx.oncomplete = function() {
-                alert(appConfig.lang === 'en' ? 'Vehicle entry saved successfully!' : 'গাড়ির এন্ট্রি সফলভাবে সেভ হয়েছে!');
+                alert(appConfig.lang === 'en' ? 'Vehicle entry saved successfully!' : 'গাড়ির এন্ট্রি সফলভাবে সেভ হয়েছে!');
                 document.getElementById('vNo').value = '';
                 document.getElementById('vPhone').value = '';
                 document.getElementById('vOwner').value = '';
+                document.getElementById('vAmount').value = '70';
                 switchTab('database');
+            };
+            tx.onerror = function(err) {
+                console.error("Transaction error saving entry:", err);
+                alert("Failed to save entry.");
             };
         }
 
         function renderDatabase() {
+            if(!db) return;
             const container = document.getElementById('recordList');
             const query = document.getElementById('searchInput').value.toLowerCase();
-            const lang = appConfig.lang || 'bn';
+            const lang = appConfig.lang === 'en' ? 'en' : 'bn';
             const t = translations[lang];
             container.innerHTML = '';
 
             const tx = db.transaction('vehicles', 'readonly');
             tx.objectStore('vehicles').getAll().onsuccess = function(e) {
-                let records = e.target.result.reverse();
-                let filtered = records.filter(item => item.vno.toLowerCase().includes(query) || item.phone.includes(query));
+                let records = e.target.result.slice().reverse();
+                let filtered = records.filter(item => item.vno.toLowerCase().includes(query) || item.phone.includes(query) || item.owner.toLowerCase().includes(query));
                 document.getElementById('dbCounter').innerText = `${t.totalPrefix} ${filtered.length}`;
 
                 filtered.forEach(item => {
+                    const displayExp = toDisplayDateFormat(item.exp);
+                    const statusBadge = item.paymentStatus === 'Paid' 
+                        ? `<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded-full">Paid (₹${item.amount})</span>`
+                        : `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded-full">Due (₹${item.amount})</span>`;
+
                     const card = document.createElement('div');
                     card.className = "bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs";
                     card.innerHTML = `
                         <div class="space-y-1">
-                            <div class="font-bold text-slate-100">${item.vno}</div>
-                            <div class="text-[11px] text-slate-400">${item.phone} (${item.owner})</div>
-                            <div class="text-[10px] text-slate-500">Exp: ${item.exp}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-100"></span>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-[11px] text-slate-400"></div>
+                            <div class="text-[10px] text-slate-500">Exp: ${displayExp}</div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="showCustomerHistory('${item.vno}')" class="bg-slate-800 text-emerald-400 px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-history"></i> ${t.historyBtn}</button>
-                            <button onclick="deleteRecord(${item.id})" class="text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="openReceipt(${item.id})" class="bg-slate-800 text-blue-400 p-2 rounded-lg" title="Print Receipt"><i class="fa-solid fa-print"></i></button>
+                            <button onclick="showCustomerHistory('${item.vno}')" class="bg-slate-800 text-emerald-400 px-2 py-1.5 rounded-lg text-[10px]"><i class="fa-solid fa-history"></i></button>
+                            <button onclick="deleteRecord(${item.id})" class="text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
+                    card.querySelector('.font-bold.text-slate-100').textContent = item.vno;
+                    card.querySelector('.text-\\[11px\\].text-slate-400').textContent = `${item.phone} (${item.owner})`;
                     container.appendChild(card);
                 });
             };
         }
 
-        function renderAlerts() {
-            const container = document.getElementById('alertList');
-            const lang = appConfig.lang || 'bn';
+        function renderLedger() {
+            if(!db) return;
+            const container = document.getElementById('ledgerList');
+            const query = document.getElementById('searchLedgerInput').value.toLowerCase();
+            const lang = appConfig.lang === 'en' ? 'en' : 'bn';
             const t = translations[lang];
+            container.innerHTML = '';
+
+            const tx = db.transaction(['ledgers', 'payments'], 'readonly');
+            tx.objectStore('ledgers').getAll().onsuccess = function(eLedger) {
+                let ledgers = eLedger.target.result.filter(l => l.phone.includes(query) || l.owner.toLowerCase().includes(query));
+                document.getElementById('ledgerCounter').innerText = `${lang === 'en' ? 'Customer' : 'গ্রাহক'}: ${ledgers.length}`;
+
+                if (ledgers.length === 0) {
+                    container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">${lang === 'en' ? 'No customer or ledger found.' : 'কোনো বকেয়া খাতা বা কাস্টমার পাওয়া যায়নি।'}</div>`;
+                    return;
+                }
+
+                tx.objectStore('payments').getAll().onsuccess = function(ePayment) {
+                    let allPayments = ePayment.target.result;
+
+                    ledgers.forEach(l => {
+                        let oldDue = l.lastCurrentDue || 0;
+                        
+                        let unsentEntries = l.entries ? l.entries.filter(en => !en.sent) : [];
+                        let newVehicleSum = 0;
+                        unsentEntries.forEach(en => {
+                            newVehicleSum += (parseFloat(en.amount) || 0);
+                        });
+
+                        let totalOutstanding = oldDue + newVehicleSum;
+
+                        let custPayments = allPayments.filter(p => p.phone === l.phone);
+                        let unsentPayments = custPayments.filter(cp => !cp.sent);
+                        let totalPaidThisBatch = 0;
+                        unsentPayments.forEach(cp => {
+                            totalPaidThisBatch += (parseFloat(cp.amountPaid) || 0);
+                        });
+
+                        let currentBalanceDue = Math.max(0, totalOutstanding - totalPaidThisBatch);
+
+                        let entriesContainer = document.createElement('div');
+                        let paymentHistoryContainer = document.createElement('div');
+
+                        if (unsentEntries.length > 0) {
+                            unsentEntries.forEach(en => {
+                                let amt = parseFloat(en.amount) || 0;
+                                let row = document.createElement('div');
+                                row.className = "flex justify-between text-[11px] text-slate-300 border-b border-slate-800/60 py-1";
+                                row.innerHTML = `<span>🚗 <b class="text-slate-100"></b> (${en.date || en.issue})</span><span class="font-bold text-amber-400">₹${amt}</span>`;
+                                row.querySelector('b').textContent = en.vno;
+                                entriesContainer.appendChild(row);
+                            });
+                        } else {
+                            entriesContainer.innerHTML = `<div class="text-[11px] text-slate-400 italic py-1 text-center">${t.ledgerEmptyMsg}</div>`;
+                        }
+
+                        if (unsentPayments.length > 0) {
+                            unsentPayments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                            unsentPayments.forEach(cp => {
+                                let pAmt = parseFloat(cp.amountPaid) || 0;
+                                let prow = document.createElement('div');
+                                prow.className = "flex justify-between text-[11px] text-emerald-400 border-b border-emerald-900/30 py-1";
+                                prow.innerHTML = `<span>💵 <b class="text-slate-200">${lang === 'en' ? 'Payment Received' : 'পেমেন্ট রিসিভড'}</b> (${cp.date})</span><span class="font-bold">-₹${pAmt}</span>`;
+                                paymentHistoryContainer.appendChild(prow);
+                            });
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = "bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-3 text-xs";
+                        
+                        let topDiv = document.createElement('div');
+                        topDiv.className = "flex justify-between items-start border-b border-slate-800 pb-2";
+                        topDiv.innerHTML = `
+                            <div>
+                                <div class="font-bold text-emerald-400 text-sm"></div>
+                                <div class="text-[11px] text-slate-400"><i class="fa-solid fa-phone"></i> </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-400">Current Balance Due</div>
+                                <div class="text-base font-bold text-red-400">₹${currentBalanceDue}</div>
+                            </div>
+                        `;
+                        topDiv.querySelector('.font-bold.text-emerald-400').textContent = l.owner;
+                        topDiv.querySelector('.text-\\[11px\\].text-slate-400').innerHTML = `<i class="fa-solid fa-phone"></i> ${l.phone}`;
+
+                        let subBox = document.createElement('div');
+                        subBox.className = "bg-slate-950 p-2.5 rounded-lg space-y-1";
+                        subBox.innerHTML = `
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">Old Due: ₹${oldDue}</div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase mt-1">New Vehicles / Charges:</div>
+                        `;
+                        subBox.appendChild(entriesContainer);
+                        if(unsentPayments.length > 0) {
+                            let paySec = document.createElement('div');
+                            paySec.className = "pt-2 mt-2 border-t border-slate-800";
+                            paySec.innerHTML = `<div class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Payment History:</div>`;
+                            paySec.appendChild(paymentHistoryContainer);
+                            subBox.appendChild(paySec);
+                        }
+
+                        let actionsDiv = document.createElement('div');
+                        actionsDiv.className = "flex gap-2 pt-1";
+                        actionsDiv.innerHTML = `
+                            <input type="number" id="payInput_${l.phone}" placeholder="${lang === 'en' ? 'Amount' : 'অ্যামাউন্ট'}" class="w-28 px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 text-xs">
+                            <button onclick="receivePayment('${l.phone}')" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex-1">
+                                <i class="fa-solid fa-indian-rupee-sign"></i> ${t.paymentReceiveBtn}
+                            </button>
+                            <button onclick="sendWhatsAppLedger('${l.phone}')" class="bg-emerald-800 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs" title="WhatsApp Receipt">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                            </button>
+                            <button onclick="deleteCustomerLedger('${l.phone}')" class="bg-red-950 border border-red-800 text-red-400 px-2 py-1.5 rounded-lg text-xs" title="Delete Ledger">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        `;
+
+                        card.appendChild(topDiv);
+                        card.appendChild(subBox);
+                        card.appendChild(actionsDiv);
+                        container.appendChild(card);
+                    });
+                };
+            };
+        }
+
+        function deleteCustomerLedger(phone) {
+            if (confirm("আপনি কি নিশ্চিতভাবে এই কাস্টমারের খাতা ও পেমেন্ট হিস্ট্রি ডিলিট করতে চান?")) {
+                if(!db) return;
+                const tx = db.transaction(['ledgers', 'payments'], 'readwrite');
+                tx.objectStore('ledgers').delete(phone);
+                
+                const payStore = tx.objectStore('payments');
+                payStore.getAll().onsuccess = function(e) {
+                    let pays = e.target.result.filter(p => p.phone === phone);
+                    pays.forEach(p => payStore.delete(p.id));
+                };
+
+                tx.oncomplete = function() {
+                    alert("কাস্টমারের খাতা মুছে ফেলা হয়েছে!");
+                    renderLedger();
+                };
+            }
+        }
+
+        function receivePayment(phone) {
+            const inputEl = document.getElementById(`payInput_${phone}`);
+            const payAmount = parseFloat(inputEl.value);
+
+            if (isNaN(payAmount) || payAmount <= 0) {
+                alert("সঠিক পেমেন্ট অ্যামাউন্ট লিখুন!");
+                return;
+            }
+
+            const tx = db.transaction(['ledgers', 'payments'], 'readwrite');
+            const ledgerStore = tx.objectStore('ledgers');
+            const paymentStore = tx.objectStore('payments');
+
+            ledgerStore.get(phone).onsuccess = function(e) {
+                let ledger = e.target.result;
+                if (!ledger) return;
+
+                paymentStore.getAll().onsuccess = function(ePay) {
+                    let allPays = ePay.target.result.filter(p => p.phone === phone);
+                    
+                    let oldDue = ledger.lastCurrentDue || 0;
+                    let unsentEntries = ledger.entries ? ledger.entries.filter(en => !en.sent) : [];
+                    let newVehicleSum = 0;
+                    unsentEntries.forEach(en => newVehicleSum += (parseFloat(en.amount) || 0));
+                    let totalOutstanding = oldDue + newVehicleSum;
+
+                    let totalPaidAlready = 0;
+                    allPays.forEach(p => {
+                        if (!p.sent) totalPaidAlready += (parseFloat(p.amountPaid) || 0);
+                    });
+
+                    let currentDue = Math.max(0, totalOutstanding - totalPaidAlready);
+
+                    if (payAmount > currentDue) {
+                        alert("পেমেন্ট অ্যামাউন্ট মোট বকেয়ার চেয়ে বেশি হতে পারে না!");
+                        return;
+                    }
+
+                    const paymentRecord = {
+                        phone: phone,
+                        owner: ledger.owner,
+                        amountPaid: payAmount,
+                        date: new Date().toLocaleDateString('en-GB'),
+                        timestamp: new Date().toISOString(),
+                        sent: false
+                    };
+
+                    paymentStore.add(paymentRecord);
+
+                    tx.oncomplete = function() {
+                        alert(`₹${payAmount} সফলভাবে রিসিভ করা হয়েছে।`);
+                        inputEl.value = '';
+                        renderLedger();
+                    };
+                };
+            };
+        }
+
+        function generatePaymentMessage(ledger, oldDue, vehicleListStr, newTotalOutstanding, paidDateStr, paidAmountDisplay, currentBalanceDue) {
+            const lang = appConfig.lang || 'bn';
+            let template = lang === 'en' ? (appConfig.paymentMsgEn || defaultPaymentTemplateEn) : (appConfig.paymentMsgBn || defaultPaymentTemplateBn);
+
+            return template
+                .replace(/{owner}/g, ledger.owner || 'Customer')
+                .replace(/{phone}/g, ledger.phone || '')
+                .replace(/{old_due}/g, oldDue)
+                .replace(/{vehicle_list}/g, vehicleListStr.trim())
+                .replace(/{new_total_outstanding}/g, newTotalOutstanding)
+                .replace(/{paid_date}/g, paidDateStr)
+                .replace(/{paid_amount}/g, paidAmountDisplay)
+                .replace(/{current_balance_due}/g, currentBalanceDue)
+                .replace(/{center}/g, appConfig.centerName || '')
+                .replace(/{center_phone}/g, appConfig.centerPhone || '')
+                .replace(/{address}/g, appConfig.centerAddress || '');
+        }
+
+        function sendWhatsAppLedger(phone) {
+            const tx = db.transaction(['ledgers', 'payments'], 'readwrite');
+            let payStore = tx.objectStore('payments');
+            let request = payStore.getAll();
+
+            request.onsuccess = function(e) {
+                let allPayments = e.target.result;
+                let custPayments = allPayments.filter(p => p.phone === phone);
+                
+                let ledgerStore = tx.objectStore('ledgers');
+                ledgerStore.get(phone).onsuccess = function(eLedger) {
+                    let l = eLedger.target.result;
+                    if (!l) return;
+
+                    let oldDue = l.lastCurrentDue || 0;
+                    let unsentEntries = l.entries ? l.entries.filter(en => !en.sent) : [];
+                    let newVehicleSum = 0;
+                    let vehicleListStr = "";
+
+                    if (unsentEntries.length > 0) {
+                        unsentEntries.forEach((en, idx) => {
+                            let amt = parseFloat(en.amount) || 0;
+                            newVehicleSum += amt;
+                            vehicleListStr += `${en.vno || ('Vehicle ' + (idx + 1))}: ₹${amt}\n`;
+                        });
+                    } else {
+                        vehicleListStr = "";
+                    }
+
+                    let newTotalOutstanding = oldDue + newVehicleSum;
+
+                    let unsentPayments = custPayments.filter(p => !p.sent);
+                    let totalPaidThisBatch = 0;
+
+                    unsentPayments.forEach(p => {
+                        totalPaidThisBatch += (parseFloat(p.amountPaid) || 0);
+                    });
+
+                    let paidDateStr = "";
+                    let paidAmountDisplay = totalPaidThisBatch > 0 ? `₹${totalPaidThisBatch}` : `₹0`;
+
+                    let currentBalanceDue = Math.max(0, newTotalOutstanding - totalPaidThisBatch);
+
+                    let msg = generatePaymentMessage(l, oldDue, vehicleListStr, newTotalOutstanding, paidDateStr, paidAmountDisplay, currentBalanceDue);
+                    
+                    l.lastCurrentDue = currentBalanceDue;
+                    if (l.entries) {
+                        l.entries.forEach(en => en.sent = true);
+                    }
+                    ledgerStore.put(l);
+
+                    unsentPayments.forEach(p => {
+                        p.sent = true;
+                        payStore.put(p);
+                    });
+
+                    tx.oncomplete = function() {
+                        renderLedger();
+                        window.open(`https://wa.me/91${l.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                    };
+                };
+            };
+        }
+
+        function resetPaymentTemplate(type) {
+            if (type === 'bn') {
+                document.getElementById('inputPaymentMsgBn').value = defaultPaymentTemplateBn;
+            } else {
+                document.getElementById('inputPaymentMsgEn').value = defaultPaymentTemplateEn;
+            }
+        }
+
+        function previewPaymentTemplate() {
+            const sampleLedger = {
+                owner: "Sahid",
+                phone: "7003118728"
+            };
+            let sampleOldDue = 500;
+            let sampleVehicleList = "Vehicle 1: ₹100\nVehicle 2: ₹100";
+            let sampleNewTotal = 700;
+            let samplePaidDate = "";
+            let samplePaidAmount = "₹50";
+            let sampleCurrentBalanceDue = 650;
+
+            let oldBn = appConfig.paymentMsgBn;
+            let oldEn = appConfig.paymentMsgEn;
+            appConfig.paymentMsgBn = document.getElementById('inputPaymentMsgBn').value;
+            appConfig.paymentMsgEn = document.getElementById('inputPaymentMsgEn').value;
+
+            let previewText = generatePaymentMessage(sampleLedger, sampleOldDue, sampleVehicleList, sampleNewTotal, samplePaidDate, samplePaidAmount, sampleCurrentBalanceDue);
+            document.getElementById('paymentPreviewBox').innerText = previewText;
+
+            appConfig.paymentMsgBn = oldBn;
+            appConfig.paymentMsgEn = oldEn;
+        }
+
+        function savePaymentTemplates() {
+            appConfig.paymentMsgBn = document.getElementById('inputPaymentMsgBn').value.trim();
+            appConfig.paymentMsgEn = document.getElementById('inputPaymentMsgEn').value.trim();
+            localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            alert("Payment templates saved successfully!");
+            closeModal('paymentMsgModal');
+        }
+
+        function openReceipt(id) {
+            if(!db) return;
+            const tx = db.transaction('vehicles', 'readonly');
+            tx.objectStore('vehicles').get(id).onsuccess = function(e) {
+                const r = e.target.result;
+                if(!r) return;
+                document.getElementById('receiptCenterName').innerText = appConfig.centerName;
+                document.getElementById('receiptCenterAddress').innerText = `Address: ${appConfig.centerAddress}`;
+                document.getElementById('receiptCenterPhone').innerText = appConfig.centerPhone;
+                document.getElementById('recVNo').innerText = r.vno;
+                document.getElementById('recOwner').innerText = r.owner;
+                document.getElementById('recPhone').innerText = r.phone;
+                document.getElementById('recIssue').innerText = toDisplayDateFormat(r.issue);
+                document.getElementById('recExp').innerText = toDisplayDateFormat(r.exp);
+                document.getElementById('printModal').classList.remove('hidden');
+            };
+        }
+
+        function switchAlertSubTab(subTab) {
+            currentAlertSubTab = subTab;
+            document.querySelectorAll('.alert-subtab').forEach(el => el.classList.remove('active-subtab'));
+            
+            let btnId = '';
+            if (subTab === 'today') btnId = 'subTabToday';
+            else if (subTab === '3day') btnId = 'subTab3Day';
+            else if (subTab === '7day') btnId = 'subTab7Day';
+            else if (subTab === 'expired') btnId = 'subTabExpired';
+
+            const activeBtn = document.getElementById(btnId);
+            if (activeBtn) activeBtn.classList.add('active-subtab');
+
+            renderAlerts();
+        }
+
+        function renderAlerts() {
+            if(!db) return;
+            const container = document.getElementById('alertList');
             container.innerHTML = '';
 
             const tx = db.transaction('vehicles', 'readonly');
             tx.objectStore('vehicles').getAll().onsuccess = function(e) {
                 let records = e.target.result;
-                let alertItems = records.map(item => ({ ...item, daysLeft: calculateDaysLeft(item.exp) }))
-                                        .filter(item => item.daysLeft <= 30);
+                
+                let todayList = [];
+                let threeDayList = [];
+                let sevenDayList = [];
+                let expiredList = [];
 
-                alertItems.sort((a, b) => a.daysLeft - b.daysLeft);
-                document.getElementById('alertCounter').innerText = `${t.urgentPrefix} ${alertItems.length}`;
-
-                alertItems.forEach(item => {
-                    let alertStage = "30 Days Alert";
-                    let badgeColor = "bg-blue-950 text-blue-400 border-blue-800";
-
-                    if (item.daysLeft <= 3) {
-                        alertStage = "3 Days Final Alert!";
-                        badgeColor = "bg-red-950 text-red-400 border-red-800 animate-pulse";
-                    } else if (item.daysLeft <= 7) {
-                        alertStage = "7 Days Alert!";
-                        badgeColor = "bg-amber-950 text-amber-400 border-amber-800";
+                records.forEach(item => {
+                    const daysLeft = calculateDaysLeft(item.exp);
+                    if (daysLeft < 0) {
+                        expiredList.push({ ...item, daysLeft });
+                    } else if (daysLeft <= 1) {
+                        todayList.push({ ...item, daysLeft });
+                    } else if (daysLeft >= 2 && daysLeft <= 3) {
+                        threeDayList.push({ ...item, daysLeft });
+                    } else if (daysLeft >= 4 && daysLeft <= 7) {
+                        sevenDayList.push({ ...item, daysLeft });
                     }
+                });
 
+                document.getElementById('countToday').innerText = todayList.length;
+                document.getElementById('count3Day').innerText = threeDayList.length;
+                document.getElementById('count7Day').innerText = sevenDayList.length;
+                document.getElementById('countExpired').innerText = expiredList.length;
+
+                let activeList = [];
+                let badgeLabel = "";
+                let badgeColor = "";
+
+                if (currentAlertSubTab === 'today') {
+                    activeList = todayList;
+                    badgeLabel = "1 Day Left (Today)";
+                    badgeColor = "bg-amber-950 text-amber-400 border-amber-800 animate-pulse";
+                } else if (currentAlertSubTab === '3day') {
+                    activeList = threeDayList;
+                    badgeLabel = "3 Days Range (2-3 Days)";
+                    badgeColor = "bg-orange-950 text-orange-400 border-orange-800";
+                } else if (currentAlertSubTab === '7day') {
+                    activeList = sevenDayList;
+                    badgeLabel = "7 Days Range (4-7 Days)";
+                    badgeColor = "bg-blue-950 text-blue-400 border-blue-800";
+                } else if (currentAlertSubTab === 'expired') {
+                    activeList = expiredList;
+                    badgeLabel = "Expired!";
+                    badgeColor = "bg-red-950 text-red-400 border-red-800 font-bold";
+                }
+
+                if (activeList.length === 0) {
+                    container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">কোনো রেকর্ড পাওয়া যায়নি।</div>`;
+                    return;
+                }
+
+                activeList.forEach(item => {
+                    const displayExp = toDisplayDateFormat(item.exp);
                     let sentBadge = item.isSent 
                         ? `<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded-full"><i class="fa-solid fa-check-double"></i> Sent</span>` 
                         : `<span class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full">Not Sent</span>`;
 
                     const card = document.createElement('div');
                     card.className = "bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs";
-                    card.innerHTML = `
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="font-bold text-slate-100">${item.vno}</span>
-                                <span class="text-[9px] px-2 py-0.5 border rounded-full font-bold ${badgeColor}">${alertStage}</span>
-                                ${sentBadge}
-                            </div>
-                            <div class="text-[11px] text-emerald-400">${item.phone} (${item.owner})</div>
-                            <div class="text-[10px] text-slate-400">Exp: ${item.exp} (${item.daysLeft} days left)</div>
+                    
+                    let actionButtonsDiv = document.createElement('div');
+                    actionButtonsDiv.className = "flex gap-1.5";
+                    if (currentAlertSubTab === 'expired') {
+                        let delBtn = document.createElement('button');
+                        delBtn.className = "bg-red-950 border border-red-800 text-red-400 px-2.5 py-1.5 rounded-lg font-bold";
+                        delBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Delete`;
+                        delBtn.onclick = () => deleteExpiredRecord(item.id);
+                        actionButtonsDiv.appendChild(delBtn);
+                    } else {
+                        let smsBtn = document.createElement('button');
+                        smsBtn.className = "bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-xs";
+                        smsBtn.title = "Send SMS";
+                        smsBtn.innerHTML = `<i class="fa-solid fa-comment-sms"></i>`;
+                        smsBtn.onclick = () => sendSMS(item.id, item.phone, item.vno, displayExp);
+
+                        let waBtn = document.createElement('button');
+                        waBtn.className = "bg-emerald-600 text-slate-950 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold";
+                        waBtn.title = "Send WhatsApp";
+                        waBtn.innerHTML = `<i class="fa-brands fa-whatsapp"></i>`;
+                        waBtn.onclick = () => sendWhatsApp(item.id, item.phone, item.vno, item.owner, displayExp);
+
+                        actionButtonsDiv.appendChild(smsBtn);
+                        actionButtonsDiv.appendChild(waBtn);
+                    }
+
+                    let infoDiv = document.createElement('div');
+                    infoDiv.className = "space-y-1";
+                    infoDiv.innerHTML = `
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-bold text-slate-100"></span>
+                            <span class="text-[9px] px-2 py-0.5 border rounded-full ${badgeColor}"></span>
+                            ${currentAlertSubTab !== 'expired' ? sentBadge : ''}
                         </div>
-                        <div class="flex gap-1.5">
-                            <button onclick="sendSMS(${item.id}, '${item.phone}', '${item.vno}', '${item.exp}')" class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-comment-sms"></i></button>
-                            <button onclick="sendWhatsApp(${item.id}, '${item.phone}', '${item.vno}', '${item.owner}', '${item.exp}')" class="bg-emerald-600 text-slate-950 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"><i class="fa-brands fa-whatsapp"></i></button>
-                        </div>
+                        <div class="text-[11px] text-emerald-400"></div>
+                        <div class="text-[10px] text-slate-400">Exp: ${displayExp}</div>
                     `;
+                    infoDiv.querySelector('.font-bold.text-slate-100').textContent = item.vno;
+                    infoDiv.querySelector('.text-\\[9px\\].px-2').textContent = `${badgeLabel} (${item.daysLeft}d left)`;
+                    infoDiv.querySelector('.text-\\[11px\\].text-emerald-400').textContent = `${item.phone} (${item.owner})`;
+
+                    card.appendChild(infoDiv);
+                    card.appendChild(actionButtonsDiv);
                     container.appendChild(card);
                 });
             };
@@ -607,6 +1441,7 @@
         }
 
         function markAsSent(id) {
+            if(!db) return;
             const tx = db.transaction('vehicles', 'readwrite');
             const store = tx.objectStore('vehicles');
             store.get(id).onsuccess = function(e) {
@@ -619,82 +1454,174 @@
             tx.oncomplete = function() { renderAlerts(); };
         }
 
-              function buildMessage(owner, vno, exp) {
-    let formattedExp = exp;
-    if (exp && exp.includes('/')) {
-        let parts = exp.split('/');
-        if (parts.length === 3) {
-            formattedExp = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        function buildMessage(owner, vno, exp) {
+            let tmpl = appConfig.msgTemplate || "নমস্কার {owner}, আপনার গাড়ি {vno}-এর পলিউশনের মেয়াদ {exp} তারিখে শেষ হচ্ছে। রিনিউ করতে যোগাযোগ করুন: {center}, কল করুন: {cphone}。";
+            return tmpl.replace('{owner}', `*${owner || 'Customer'}*`)
+                       .replace('{vno}', `*${vno}*`)
+                       .replace('{exp}', `*${exp}*`)
+                       .replace('{center}', `*${appConfig.centerName}*`)
+                       .replace('{cphone}', appConfig.centerPhone || "");
         }
-    }
-
-    let tmpl = appConfig.msgTemplate || "Dear {owner}, your vehicle {vno} PUC certificate is expiring on {exp}. Please visit or contact {center} at {cphone} to renew your PUC certificate. Thank you!";
-    
-    return tmpl.replace('{owner}', `*${owner || 'Customer'}*`)
-               .replace('{vno}', `*${vno}*`)
-               .replace('{exp}', `*${formattedExp}*`)
-               .replace('{center}', `*${appConfig.centerName}*`)
-               .replace('{cphone}', appConfig.centerPhone || "");
-}
-
-
 
         function sendWhatsApp(id, phone, vno, owner, exp) {
-            let msg = buildMessage(owner, vno, exp);
-            markAsSent(id);
-            window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            if(confirm("WhatsApp message পাঠাতে চান? (পাঠানোর পর Sent Mark করা হবে)")) {
+                let msg = buildMessage(owner, vno, exp);
+                markAsSent(id);
+                window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            }
         }
 
         function sendSMS(id, phone, vno, exp) {
-            let msg = `Dear Customer, your vehicle ${vno} PUC certificate is expiring on ${exp}. Contact: ${appConfig.centerName} (${appConfig.centerPhone})`;
-            markAsSent(id);
-            window.open(`sms:+91${phone}?body=${encodeURIComponent(msg)}`, '_blank');
+            if(confirm("SMS পাঠাতে চান? (পাঠানোর পর Sent Mark করা হবে)")) {
+                let msg = `Dear Customer, vehicle ${vno} PUC expires on ${exp}. Contact: ${appConfig.centerName} (${appConfig.centerPhone})`;
+                markAsSent(id);
+                window.open(`sms:+91${phone}?body=${encodeURIComponent(msg)}`, '_blank');
+            }
         }
 
-        function showCustomerHistory(vno) {
-            const tx = db.transaction('vehicles', 'readonly');
-            tx.objectStore('vehicles').getAll().onsuccess = function(e) {
-                let history = e.target.result.filter(item => item.vno === vno);
-                let content = document.getElementById('historyContent');
-                content.innerHTML = `<div class="font-bold text-slate-200 border-b border-slate-800 pb-1">Vehicle: ${vno} (${history.length} Entries)</div>`;
+        function deleteExpiredRecord(id) {
+            if (confirm("আপনি কি নিশ্চিতভাবে এই expired রেকর্ডটি ডিলিট করতে চান?")) {
+                if(!db) return;
+                const tx = db.transaction('vehicles', 'readwrite');
+                tx.objectStore('vehicles').delete(id);
+                tx.oncomplete = function() { renderAlerts(); };
+            }
+        }
 
-                history.forEach((h, index) => {
-                    content.innerHTML += `
-                        <div class="bg-slate-950 p-2 rounded border border-slate-800 space-y-0.5">
-                            <div class="text-emerald-400 font-semibold">Entry #${history.length - index}</div>
-                            <div>Issue Date: ${h.issue}</div>
-                            <div>Expiry Date: ${h.exp}</div>
-                        </div>
-                    `;
-                });
-                document.getElementById('historyModal').classList.remove('hidden');
+        async function updateStorageEstimateInfo() {
+            const infoDiv = document.getElementById('storageUsageInfo');
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const estimate = await navigator.storage.estimate();
+                    const usedMB = (estimate.usage / (1024 * 1024)).toFixed(2);
+                    const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(0);
+                    infoDiv.innerHTML = `Used: <b>${usedMB} MB</b> out of <b>${quotaMB} MB</b>`;
+                } catch (err) {
+                    infoDiv.innerText = "Storage estimate unavailable.";
+                }
+            } else {
+                infoDiv.innerText = "Storage estimation not supported.";
+            }
+        }
+
+        async function requestPersistentStorage() {
+            if (navigator.storage && navigator.storage.persist) {
+                const isPersisted = await navigator.storage.persist();
+                alert(isPersisted ? "Persistent storage granted successfully!" : "Persistent storage permission denied.");
+            } else {
+                alert("Persistent storage not supported.");
+            }
+        }
+
+        function checkAutomaticBackup() {
+            if (appConfig.autoBackupFreq === 'off') return;
+            const todayStr = new Date().toISOString().slice(0, 10);
+            if (appConfig.lastBackupDate === todayStr && appConfig.autoBackupFreq === 'daily') return;
+
+            setTimeout(() => {
+                appConfig.lastBackupDate = todayStr;
+                localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            }, 2000);
+        }
+
+        function saveAutoBackupSettings() {
+            appConfig.autoBackupFreq = document.getElementById('autoBackupFreq').value;
+            localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            alert("Backup settings updated!");
+            closeModal('backupModal');
+        }
+
+        function backupDataJSON() {
+            toggleDrawer();
+            if(!db) return;
+
+            const txVehicles = db.transaction('vehicles', 'readonly');
+            txVehicles.objectStore('vehicles').getAll().onsuccess = function(eVehicles) {
+                const txLedgers = db.transaction('ledgers', 'readonly');
+                txLedgers.objectStore('ledgers').getAll().onsuccess = function(eLedgers) {
+                    const txPayments = db.transaction('payments', 'readonly');
+                    txPayments.objectStore('payments').getAll().onsuccess = function(ePayments) {
+                        const backupObj = {
+                            config: appConfig,
+                            vehicles: eVehicles.target.result,
+                            ledgers: eLedgers.target.result,
+                            payments: ePayments.target.result,
+                            backup_date: new Date().toISOString()
+                        };
+                        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+                        const dlAnchor = document.createElement('a');
+                        dlAnchor.setAttribute("href", dataStr);
+                        dlAnchor.setAttribute("download", `puc_full_backup_${new Date().toISOString().slice(0,10)}.json`);
+                        document.body.appendChild(dlAnchor);
+                        dlAnchor.click();
+                        dlAnchor.remove();
+                    };
+                };
             };
         }
 
-        function shareApp() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'AutoPollution Manager Pro',
-                    text: 'Manage PUC Renewal Alerts easily!',
-                    url: window.location.href,
-                });
-            } else {
-                alert("App link copied or share not supported on this browser.");
+        function restoreDataJSON(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+
+            if (!confirm("ব্যাকআপ রিস্টোর করার আগে বর্তমান ডেটার একটি ব্যাকআপ রাখা নিরাপদ। আপনি কি রিস্টোর করতে চান?")) {
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if(!parsed.config || !parsed.vehicles || !Array.isArray(parsed.vehicles)) {
+                        throw new Error("Invalid format or missing core stores");
+                    }
+                    if(parsed.config) {
+                        localStorage.setItem('auto_puc_config', JSON.stringify(parsed.config));
+                        appConfig = parsed.config;
+                    }
+                    if(!db) return;
+                    const tx = db.transaction(['vehicles', 'ledgers', 'payments'], 'readwrite');
+                    
+                    const vStore = tx.objectStore('vehicles');
+                    vStore.clear();
+                    parsed.vehicles.forEach(v => vStore.add(v));
+
+                    if (parsed.ledgers && Array.isArray(parsed.ledgers)) {
+                        const lStore = tx.objectStore('ledgers');
+                        lStore.clear();
+                        parsed.ledgers.forEach(l => lStore.add(l));
+                    }
+
+                    if (parsed.payments && Array.isArray(parsed.payments)) {
+                        const pStore = tx.objectStore('payments');
+                        pStore.clear();
+                        parsed.payments.forEach(p => pStore.add(p));
+                    }
+                    
+                    tx.oncomplete = function() {
+                        alert("Backup restored successfully!");
+                        location.reload();
+                    };
+                    tx.onerror = function(err) {
+                        console.error("Restore transaction failed:", err);
+                        alert("Error restoring backup into database.");
+                    };
+                } catch(err) {
+                    alert("Invalid or corrupted backup JSON file!");
+                }
+            };
+            reader.readAsText(file);
         }
 
         function backupData() {
             toggleDrawer();
+            if(!db) return;
             const tx = db.transaction('vehicles', 'readonly');
             tx.objectStore('vehicles').getAll().onsuccess = function(e) {
                 let records = e.target.result;
-                if(records.length === 0) {
-                    alert('No data available to download!');
-                    return;
-                }
-                let csvContent = "data:text/csv;charset=utf-8,Vehicle No,Phone,Owner,Issue Date,Expiry Date\n";
+                let csvContent = "data:text/csv;charset=utf-8,Vehicle No,Phone,Owner,Amount,Status,Issue Date,Expiry Date\n";
                 records.forEach(r => {
-                    csvContent += `${r.vno},${r.phone},${r.owner},${r.issue},${r.exp}\n`;
+                    csvContent += `${r.vno},${r.phone},${r.owner},${r.amount || 0},${r.paymentStatus || 'Due'},${toDisplayDateFormat(r.issue)},${toDisplayDateFormat(r.exp)}\n`;
                 });
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
@@ -702,17 +1629,53 @@
                 link.setAttribute("download", `puc_backup_${new Date().toISOString().slice(0,10)}.csv`);
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
+                link.remove();
             };
+        }
+
+        function showCustomerHistory(vno) {
+            if(!db) return;
+            const tx = db.transaction('vehicles', 'readonly');
+            tx.objectStore('vehicles').getAll().onsuccess = function(e) {
+                let history = e.target.result.filter(item => item.vno === vno);
+                let content = document.getElementById('historyContent');
+                content.innerHTML = `<div class="font-bold text-slate-200 border-b border-slate-800 pb-1"></div>`;
+                content.querySelector('.font-bold.text-slate-200').textContent = `Vehicle: ${vno} (${history.length} Entries)`;
+
+                history.forEach((h, index) => {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = "bg-slate-950 p-2 rounded border border-slate-800 space-y-0.5";
+                    let titleDiv = document.createElement('div');
+                    titleDiv.className = "text-emerald-400 font-semibold";
+                    titleDiv.textContent = `Entry #${history.length - index} (₹${h.amount || 0} - ${h.paymentStatus || 'Due'})`;
+                    let descDiv = document.createElement('div');
+                    descDiv.textContent = `Issue Date: ${toDisplayDateFormat(h.issue)} | Exp: ${toDisplayDateFormat(h.exp)}`;
+
+                    itemDiv.appendChild(titleDiv);
+                    itemDiv.appendChild(descDiv);
+                    content.appendChild(itemDiv);
+                });
+                document.getElementById('historyModal').classList.remove('hidden');
+            };
+        }
+
+        function shareApp() {
+            if (navigator.share) {
+                navigator.share({ title: 'AutoPollution Manager Pro', text: 'Manage PUC Renewal Alerts easily!', url: window.location.href });
+            } else {
+                alert("Share link copied!");
+            }
         }
 
         function switchTab(tab) {
             document.getElementById('tab-entry').classList.add('hidden');
             document.getElementById('tab-database').classList.add('hidden');
+            document.getElementById('tab-payment').classList.add('hidden');
             document.getElementById('tab-alerts').classList.add('hidden');
 
             document.getElementById('btnTabEntry').classList.remove('active-tab');
             document.getElementById('btnTabDb').classList.remove('active-tab');
+            document.getElementById('btnTabPayment').classList.remove('active-tab');
             document.getElementById('btnTabAlerts').classList.remove('active-tab');
 
             if (tab === 'entry') {
@@ -722,10 +1685,14 @@
                 document.getElementById('tab-database').classList.remove('hidden');
                 document.getElementById('btnTabDb').classList.add('active-tab');
                 renderDatabase();
+            } else if (tab === 'payment') {
+                document.getElementById('tab-payment').classList.remove('hidden');
+                document.getElementById('btnTabPayment').classList.add('active-tab');
+                renderLedger();
             } else if (tab === 'alerts') {
                 document.getElementById('tab-alerts').classList.remove('hidden');
                 document.getElementById('btnTabAlerts').classList.add('active-tab');
-                renderAlerts();
+                switchAlertSubTab('today');
             }
         }
 
@@ -739,11 +1706,21 @@
             if(id === 'centerModal') {
                 document.getElementById('inputCenterName').value = appConfig.centerName;
                 document.getElementById('inputCenterPhone').value = appConfig.centerPhone || "";
+                document.getElementById('inputCenterAddress').value = appConfig.centerAddress || "";
             } else if (id === 'msgModal') {
                 document.getElementById('inputMsgTemplate').value = appConfig.msgTemplate || "";
+            } else if (id === 'paymentMsgModal') {
+                document.getElementById('inputPaymentMsgBn').value = appConfig.paymentMsgBn || defaultPaymentTemplateBn;
+                document.getElementById('inputPaymentMsgEn').value = appConfig.paymentMsgEn || defaultPaymentTemplateEn;
+                previewPaymentTemplate();
             } else if (id === 'langModal') {
                 const radios = document.getElementsByName('appLang');
                 radios.forEach(r => { if(r.value === (appConfig.lang || 'bn')) r.checked = true; });
+            } else if (id === 'pinModal') {
+                document.getElementById('inputNewPin').value = "";
+            } else if (id === 'backupModal') {
+                document.getElementById('autoBackupFreq').value = appConfig.autoBackupFreq || 'daily';
+                updateStorageEstimateInfo();
             }
             document.getElementById(id).classList.remove('hidden');
         }
@@ -762,16 +1739,9 @@
             closeModal('langModal');
         }
 
-        function alertAboutUs() { alert(appConfig.lang === 'en' ? 'AutoPollution Manager Pro\nVersion 3.2\nDeveloped for PUC Centers' : 'AutoPollution Manager Pro\nভার্সন ৩.২\nপলিউশন সেন্টারের জন্য তৈরি'); }
-        function alertFeedback() { alert(appConfig.lang === 'en' ? 'Thank you for your feedback!' : 'আপনার ফিডব্যাকের জন্য ধন্যবাদ!'); }
-        function alertPrivacy() { alert(appConfig.lang === 'en' ? '100% Offline & Secured Local Storage App.' : '১০০% অফলাইন ও সুরক্ষিত লোকাল স্টোরেজ অ্যাপ।'); }
-                       function alertContact() { alert(appConfig.lang === 'en' ? 'Contact Support: support.sprobuilder@gmail.com' : 'যোগাযোগ করুন: support.sprobuilder@gmail.com'); }
-
-
-
         function deleteRecord(id) {
-            const confirmMsg = appConfig.lang === 'en' ? 'Are you sure you want to delete this record?' : 'আপনি কি নিশ্চিত এই রেকর্ডটি ডিলিট করতে চান?';
-            if (confirm(confirmMsg)) {
+            if (confirm("Delete this vehicle record?")) {
+                if(!db) return;
                 const tx = db.transaction('vehicles', 'readwrite');
                 tx.objectStore('vehicles').delete(id);
                 tx.oncomplete = function() { renderDatabase(); };
@@ -790,8 +1760,10 @@
         function saveCenterDetails() {
             const name = document.getElementById('inputCenterName').value.trim();
             const phone = document.getElementById('inputCenterPhone').value.trim();
+            const address = document.getElementById('inputCenterAddress').value.trim();
             if(name) appConfig.centerName = name;
             if(phone) appConfig.centerPhone = phone;
+            if(address) appConfig.centerAddress = address;
             if(tempLogoBase64) appConfig.logoUrl = tempLogoBase64;
             localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
             applyConfig();
@@ -803,9 +1775,32 @@
             if(msg) {
                 appConfig.msgTemplate = msg;
                 localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
-                alert(appConfig.lang === 'en' ? "Custom message template saved successfully!" : "কাস্টম মেসেজ টেমপ্লেট সফলভাবে সেভ হয়েছে!");
+                alert("Message template saved!");
             }
             closeModal('msgModal');
+        }
+
+        async function savePinConfig() {
+            const pinVal = document.getElementById('inputNewPin').value.trim();
+            if(pinVal.length === 4) {
+                appConfig.pinHash = await hashPin(pinVal);
+                delete appConfig.pin;
+                localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+                alert("Security PIN updated securely!");
+                closeModal('pinModal');
+            } else if (pinVal === "") {
+                disablePin();
+            } else {
+                alert("PIN must be exactly 4 digits.");
+            }
+        }
+
+        function disablePin() {
+            appConfig.pinHash = "";
+            delete appConfig.pin;
+            localStorage.setItem('auto_puc_config', JSON.stringify(appConfig));
+            alert("PIN lock disabled.");
+            closeModal('pinModal');
         }
 
         function applyConfig() {
